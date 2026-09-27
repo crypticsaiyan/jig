@@ -1,3 +1,4 @@
+import { prune } from "../context/prune";
 import type { AgentMessage } from "../provider";
 import { generateToolsArray } from "../tool";
 import type { ToolContext } from "../tool/types";
@@ -8,6 +9,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
   let iterations = 0;
   let tokensUsed = 0;
   const messages: Array<AgentMessage> = [...input.messages];
+  let contextView: AgentMessage[] = messages;
   const ctx: ToolContext = input.ctx;
   let lastPromptTokens = 0;
 
@@ -30,10 +32,14 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
       };
     }
 
+    if (lastPromptTokens >= input.config.contextWindow * 0.5) {
+      contextView = prune(messages, input.config.contextWindow, 0.1);
+    }
+
     let completion;
     try {
       completion = await input.complete(
-        messages,
+        contextView,
         generateToolsArray(),
         ctx.signal,
       );
@@ -52,7 +58,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     lastPromptTokens = completion.stats.promptTokens;
 
     // console.log(messages);
-    console.dir(messages, { depth: null });
+    console.dir(contextView, { depth: null });
     console.log(
       "Context %: ",
       (lastPromptTokens / input.config.contextWindow) * 100,

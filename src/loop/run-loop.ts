@@ -11,7 +11,8 @@ const messages: AgentMessage[] = [
   },
   {
     type: "user",
-    content: "run seq 1 5000. I need the first 1000 values",
+    content:
+      "run seq 1 5000. I need the first 1000 values. then make a folder named test run. make a file containing boilerplate c code then a file containing boilerplate js code.",
   },
 ];
 
@@ -33,7 +34,7 @@ process.on("SIGINT", () => {
 const result = await runLoop({
   messages,
   complete,
-  config: { maxIterations: 10, maxTokens: 10000, contextWindow: 4000 },
+  config: { maxIterations: 10, maxTokens: 10000, contextWindow: 2000 },
   ctx: {
     session,
     asker: async () => "allow-once",
