@@ -8,12 +8,12 @@ export const strReplace: Tool<
 > = {
   name: "str_replace",
   description:
-    "Replace a unique value of oldString with newString in a file. Fails if oldString appears zero or multiple times.",
+    "Edit an existing file by replacing one exact piece of text. oldString must appear exactly once, including whitespace and indentation, otherwise it fails with zero or multiple matches. If it fails, re-read the file and include more surrounding lines to make it unique. oldString and newString must differ. Use this for existing files, write_file for new ones.",
   parameters: z.object({
     path: z.string().describe("path to the file to edit"),
     oldString: z
       .string()
-      .describe("exact text to find, must be unique in the file"),
+      .describe("exact text to find, copied from the file, must be unique"),
     newString: z.string().describe("text to replace it with"),
   }),
   getPermissionKey: ({ path }) => ({ kind: "command", value: path }),

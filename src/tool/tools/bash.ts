@@ -8,9 +8,10 @@ export const bashTool: Tool<
   { stdout: string; stderr: string }
 > = {
   name: "bash",
-  description: "use the bash shell",
+  description:
+    "Run a shell command in the project directory and return stdout and stderr. Use it for search (grep, find, ls), running tests, typecheck and other non-interactive commands. A non-zero exit returns an Error. Output is truncated if long, so narrow the command (head, grep, wc). No interactive commands. Pipes, chaining (&&, ;, |) and redirects need user approval each time, so prefer single simple commands.",
   parameters: z.object({
-    command: z.string().describe("command to execute in bash"),
+    command: z.string().describe("single non-interactive shell command to run"),
   }),
   getPermissionKey: ({ command }) => ({ kind: "command", value: command }),
   execute: async ({ command }, signal) => {

@@ -14,9 +14,13 @@ export const fileRead: Tool<
 > = {
   name: "read_file",
   description:
-    "Read a file's content, optionally starting at a line offset with a limit",
+    "Read a text file. Returns content, totalLines and truncated. Reads up to 2000 lines by default, use offset and limit to page through larger files. Read a file before editing it. Fails if the path does not exist.",
   parameters: z.object({
-    path: z.string().describe("path of the file"),
+    path: z
+      .string()
+      .describe(
+        "path of the file, relative to the project directory or absolute",
+      ),
     offset: z
       .number()
       .describe("line offset to start reading from (default 0)")

@@ -9,10 +9,10 @@ export const fileWrite: Tool<
 > = {
   name: "write_file",
   description:
-    "Create a new file and fill it with content. Returns true when a file is created.",
+    "Create a new file with the given content. Creates missing parent folders. Fails if the file already exists, use str_replace to change an existing file.",
   parameters: z.object({
-    path: z.string().describe("path of the new file"),
-    content: z.string().describe("content of the new file"),
+    path: z.string().describe("path of the new file, relative or absolute"),
+    content: z.string().describe("full content of the new file"),
   }),
   getPermissionKey: ({ path }) => ({ kind: "command", value: path }),
   execute: async ({ path, content }) => {

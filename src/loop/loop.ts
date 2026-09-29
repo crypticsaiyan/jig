@@ -18,15 +18,15 @@ function buildMsgView(
 }
 
 export async function runLoop(input: LoopInput): Promise<LoopOutput> {
-  let iterations = 0;
-  let tokensUsed = 0;
-  const messages: Array<AgentMessage> = [...input.messages];
   const ctx: ToolContext = input.ctx;
   const cfg = input.config;
-  let lastMessageView: AgentMessage[] = [cfg.systemPrompt, ...input.messages];
-  let lastPromptTokens = 0;
+  const messages: Array<AgentMessage> = [cfg.systemPrompt, ...input.messages];
+  let lastMessageView: AgentMessage[] = [...messages];
   let previousSummary: AgentMessage = { type: "assistant", content: "" };
   let previousSummarizedUpTo = -1; // inclusive (index of last summarized msg)
+  let iterations = 0;
+  let tokensUsed = 0;
+  let lastPromptTokens = 0;
 
   while (true) {
     if (ctx.signal.aborted) {

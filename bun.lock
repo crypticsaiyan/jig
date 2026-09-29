@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "mini-harness",
+      "name": "jig",
       "dependencies": {
         "@openrouter/sdk": "^1.2.66",
         "dotenv": "^17.4.2",

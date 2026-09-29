@@ -21,31 +21,36 @@ export const compact: Compact = async (
     fromLast--;
   }
 
-  const COMPACTION_PROMPT = ` You are a context summarization assistant. Your job is to compress a long-running agent or chat conversation history into a dense, high-fidelity working state so the primary model can resume operations seamlessly without hitting token limits.
+  const COMPACTION_PROMPT = `You are an anchored context summarization assistant for coding sessions.
+Summarize only the conversation history you are given. The newest turns are kept verbatim outside your summary, so focus on older context that still matters for continuing the work.
 
-Analyze the provided transcript and output a structured summary using the following sections:
+If a "Previous summary" is provided, update it: keep facts that still hold, revise what changed, drop what is finished or superseded, and add the new messages. Output one merged summary, not a summary of the summary.
 
-1. CORE GOAL & INTENT:
-- What is the user's primary objective or standing task?
-- Note any specific constraints, technical requirements, or user preferences established.
+Output plain text using exactly these sections:
 
-2. PROGRESS & COMPLETED WORK:
-- What milestones, code changes, or steps have been successfully completed?
-- Mention critical file paths, active components, or tools used.
+## Goal
+- The user's standing task and any constraints or preferences they stated.
 
-3. KEY DECISIONS & ARCHITECTURE:
-- What critical technical, design, or logical decisions were made during the conversation?
-- List any discarded approaches to avoid repeating past mistakes.
+## Progress
+- What is done. Include file paths created or changed and what changed in each.
+- Commands run that matter (tests, typecheck) and their real results.
 
-4. PENDING TASKS & NEXT STEPS:
-- What exact sub-task or action item was immediately in progress or planned next?
-- List any unresolved questions or blockers.
+## Decisions
+- Choices made and why. Approaches tried and rejected, so they are not repeated.
 
-Guidelines:
-- Be concise, dense, and factual. Discard conversational filler, redundant tool outputs, and superseded trial-and-error steps.
-- Retain exact technical identifiers (variable names, file paths, API endpoints) that are vital for future turns.
+## Current state
+- Files, functions and identifiers needed to continue, with exact names and paths.
+- Errors or blockers still unresolved.
 
-`;
+## Next steps
+- The exact action in progress or planned next, and open questions for the user.
+
+Rules:
+- Be dense and factual. No filler, no greetings, no narration.
+- Keep exact identifiers, paths, flags and error messages. Never paraphrase them.
+- Drop tool output that is no longer needed, failed attempts that were fixed, and repeated reads of the same file.
+- Never invent facts. If something is unknown, leave it out.
+- Do not call tools or ask questions. Output only the summary.`;
 
   // truncated messages from previousSummarizedUpTo + 1 to fromLast (excluded)
   const lines: string[] = [];
