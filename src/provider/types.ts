@@ -55,3 +55,11 @@ export type ToolSpec = {
   description: string;
   parameters: object;
 };
+
+export type CompleteFunc = (
+  // generates the next completion
+  messages: AgentMessage[],
+  tools: ToolSpec[],
+  signal: AbortSignal,
+  model: string,
+) => Promise<ProviderResponse>;

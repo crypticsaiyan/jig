@@ -1,17 +1,32 @@
+import { compact } from "../context/compact";
 import { prune } from "../context/prune";
-import type { AgentMessage } from "../provider";
+import type { AgentMessage, SystemMessage } from "../provider";
 import { generateToolsArray } from "../tool";
-import type { ToolContext } from "../tool/types";
 import { dispatchTool } from "./dispatch";
+import type { ToolContext } from "../tool/types";
 import type { LoopInput, LoopOutput } from "./types";
+
+function buildMsgView(
+  systemPrompt: SystemMessage,
+  summary: AgentMessage,
+  summarizedUpTo: number,
+  messages: AgentMessage[],
+): AgentMessage[] {
+  if (systemPrompt.content.length)
+    return [systemPrompt, summary, ...messages.slice(summarizedUpTo + 1)];
+  return [summary, ...messages.slice(summarizedUpTo + 1)];
+}
 
 export async function runLoop(input: LoopInput): Promise<LoopOutput> {
   let iterations = 0;
   let tokensUsed = 0;
   const messages: Array<AgentMessage> = [...input.messages];
-  let contextView: AgentMessage[] = messages;
   const ctx: ToolContext = input.ctx;
+  const cfg = input.config;
+  let lastMessageView: AgentMessage[] = [cfg.systemPrompt, ...input.messages];
   let lastPromptTokens = 0;
+  let previousSummary: AgentMessage = { type: "assistant", content: "" };
+  let previousSummarizedUpTo = -1; // inclusive (index of last summarized msg)
 
   while (true) {
     if (ctx.signal.aborted) {
@@ -20,6 +35,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         stopReason: "interrupted",
         iterations,
         lastPromptTokens,
+        lastMessageView,
       };
     }
     console.log("Running loop ", iterations);
@@ -29,19 +45,65 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         stopReason: "max_iterations",
         iterations,
         lastPromptTokens,
+        lastMessageView,
       };
     }
 
-    if (lastPromptTokens >= input.config.contextWindow * 0.5) {
-      contextView = prune(messages, input.config.contextWindow, 0.1);
+    // prune if >= 50% ctxwindow
+    if (lastPromptTokens >= cfg.contextWindow * cfg.pruneRatio) {
+      lastMessageView = prune(
+        lastMessageView,
+        cfg.contextWindow,
+        cfg.maxPruneAllowanceRatio,
+      );
+    }
+
+    // compact if >= 90% ctxwindow
+    if (lastPromptTokens >= cfg.contextWindow * cfg.compactionRatio) {
+      try {
+        const summaryResult = await compact(
+          previousSummary,
+          previousSummarizedUpTo,
+          messages,
+          ctx.signal,
+          cfg.compactionModel,
+          cfg.transcriptCapChars,
+          input.complete,
+        );
+        if (summaryResult) {
+          const [summary, summarizedUpTo, compactionTokensUsed] = summaryResult;
+          lastMessageView = buildMsgView(
+            cfg.systemPrompt,
+            summary,
+            summarizedUpTo,
+            messages,
+          );
+
+          previousSummary = summary;
+          previousSummarizedUpTo = summarizedUpTo;
+
+          tokensUsed += compactionTokensUsed;
+        }
+      } catch (error) {
+        if (ctx.signal.aborted)
+          return {
+            messages,
+            stopReason: "interrupted",
+            iterations,
+            lastPromptTokens,
+            lastMessageView,
+          };
+        throw error;
+      }
     }
 
     let completion;
     try {
       completion = await input.complete(
-        contextView,
+        lastMessageView,
         generateToolsArray(),
         ctx.signal,
+        input.config.loopModel,
       );
     } catch (error) {
       if (ctx.signal.aborted)
@@ -50,6 +112,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
           stopReason: "interrupted",
           iterations,
           lastPromptTokens,
+          lastMessageView,
         };
       throw error;
     }
@@ -58,12 +121,13 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     lastPromptTokens = completion.stats.promptTokens;
 
     // console.log(messages);
-    console.dir(contextView, { depth: null });
+    console.dir(lastMessageView, { depth: null });
     console.log(
       "Context %: ",
       (lastPromptTokens / input.config.contextWindow) * 100,
     );
     messages.push(completion.message);
+    lastMessageView.push(completion.message);
 
     const finishReason = completion.finishReason;
 
@@ -75,6 +139,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         );
         for (const result of toolCallResults) {
           messages.push(result);
+          lastMessageView.push(result);
         }
       } else {
         return {
@@ -82,7 +147,9 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
           stopReason: "error",
           iterations,
           lastPromptTokens,
+          lastMessageView,
         };
+        // TODO: add a callback func to handle interrupts
       }
     } else if (
       finishReason === "error" ||
@@ -95,6 +162,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         stopReason: finishReason,
         iterations,
         lastPromptTokens,
+        lastMessageView,
       };
     }
     if (tokensUsed > input.config.maxTokens) {
@@ -103,6 +171,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         stopReason: "max_tokens",
         iterations,
         lastPromptTokens,
+        lastMessageView,
       };
     }
     iterations++;

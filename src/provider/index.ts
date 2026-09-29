@@ -4,6 +4,7 @@ export type {
   ProviderResponse,
   ToolCall,
   ToolMessage,
+  SystemMessage,
 } from "./types";
 
 export { complete } from "./complete";

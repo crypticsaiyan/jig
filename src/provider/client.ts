@@ -15,4 +15,4 @@ export const client = new OpenRouter({
   apiKey,
 });
 
-export const MODEL = "openrouter/free";
+// export const MODEL = "openrouter/free";

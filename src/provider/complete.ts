@@ -1,16 +1,22 @@
-import { client, MODEL } from "./client";
+import { client } from "./client";
 import { normalize, toSdkMsg, toSdkTool } from "./normalize";
-import type { AgentMessage, ProviderResponse, ToolSpec } from "./types";
+import type {
+  AgentMessage,
+  CompleteFunc,
+  ProviderResponse,
+  ToolSpec,
+} from "./types";
 
-export async function complete(
+export const complete: CompleteFunc = async (
   messages: AgentMessage[],
   tools: ToolSpec[] = [],
   signal: AbortSignal,
-): Promise<ProviderResponse> {
+  model: string,
+): Promise<ProviderResponse> => {
   const completion = await client.chat.send(
     {
       chatRequest: {
-        model: MODEL,
+        model,
         messages: messages.map(toSdkMsg),
         tools: tools.map(toSdkTool),
         stream: false,
@@ -24,4 +30,4 @@ export async function complete(
   }
 
   return normalize(completion);
-}
+};

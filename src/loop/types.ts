@@ -1,12 +1,6 @@
-import type { AgentMessage, ProviderResponse, ToolSpec } from "../provider";
+import type { AgentMessage } from "../provider";
+import type { CompleteFunc, SystemMessage } from "../provider/types";
 import type { ToolContext } from "../tool/types";
-
-export type CompleteFunc = (
-  // generates the next completion
-  messages: AgentMessage[],
-  tools: ToolSpec[],
-  signal: AbortSignal,
-) => Promise<ProviderResponse>;
 
 // dependency injecting interfaces for loop
 
@@ -15,6 +9,13 @@ export interface LoopConfig {
   maxIterations: number;
   maxTokens: number;
   contextWindow: number; // depends on the model (TODO: model mapping)
+  pruneRatio: number; // limit after which prune fires
+  maxPruneAllowanceRatio: number; // max ctx allowed (latest max not pruned)
+  compactionRatio: number; // limit after which compaction fires
+  systemPrompt: SystemMessage;
+  compactionModel: string;
+  loopModel: string;
+  transcriptCapChars: number;
 }
 
 // loop input format
@@ -40,4 +41,5 @@ export interface LoopOutput {
   stopReason: StopReason;
   iterations: number;
   lastPromptTokens: number;
+  lastMessageView: AgentMessage[];
 }

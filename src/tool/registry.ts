@@ -5,7 +5,7 @@ import { bashTool } from "./tools/bash";
 import { fileRead } from "./tools/read_file";
 import { strReplace } from "./tools/str_replace";
 import { fileWrite } from "./tools/write_file";
-import { truncateStrings } from "./truncate";
+import { truncateStrings } from "./truncate_tool";
 import type { Tool, ToolContext } from "./types";
 import z from "zod";
 
