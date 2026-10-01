@@ -18,3 +18,8 @@ export type Compact = (
 ) => Promise<
   [summary: AgentMessage, summaryUpTo: number, tokensUsed: number] | null
 >;
+
+export type Skill = {
+  name: string;
+  description: string;
+};

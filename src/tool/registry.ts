@@ -2,6 +2,7 @@ import { checkPermission } from "../permission/check";
 import type { Allowed } from "../permission/types";
 import type { ToolSpec } from "../provider";
 import { bashTool } from "./tools/bash";
+import { loadSkill } from "./tools/load_skill";
 import { fileRead } from "./tools/read_file";
 import { strReplace } from "./tools/str_replace";
 import { fileWrite } from "./tools/write_file";
@@ -9,7 +10,13 @@ import { truncateStrings } from "./truncate_tool";
 import type { Tool, ToolContext } from "./types";
 import z from "zod";
 
-const tools: Tool<any, unknown>[] = [bashTool, fileRead, strReplace, fileWrite];
+const tools: Tool<any, unknown>[] = [
+  bashTool,
+  fileRead,
+  strReplace,
+  fileWrite,
+  loadSkill,
+];
 
 export const registry: Record<string, Tool<any, unknown>> = Object.fromEntries(
   tools.map((tool) => [tool.name, tool]),

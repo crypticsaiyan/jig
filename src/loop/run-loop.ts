@@ -7,8 +7,7 @@ import { generateSystemPrompt } from "../context/system_prompt";
 const messages: AgentMessage[] = [
   {
     type: "user",
-    content:
-      "run seq 1 5000. I need the first 1000 values. then make a folder named test run. make a file containing boilerplate c code then a file containing boilerplate js code.",
+    content: "which skills can you see. what are their contents?",
   },
 ];
 
@@ -27,7 +26,7 @@ process.on("SIGINT", () => {
   console.log("band kro");
 });
 
-const systemPrompt = generateSystemPrompt();
+const systemPrompt = await generateSystemPrompt();
 
 const result = await runLoop({
   messages,

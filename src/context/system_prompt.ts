@@ -1,6 +1,8 @@
+import { readdir, readFile } from "node:fs/promises";
 import type { SystemMessage } from "../provider";
+import type { Skill } from "./types";
 
-export const generateSystemPrompt = (): SystemMessage => {
+export const generateSystemPrompt = async (): Promise<SystemMessage> => {
   const INTRODUCTION = `You are jig, an AI coding assistant that helps the user with software engineering tasks.
 `;
 
@@ -41,9 +43,41 @@ export const generateSystemPrompt = (): SystemMessage => {
 - Date: ${date}
 `;
 
+  let SKILLS = "";
+
+  try {
+    let skills: Skill[] = [];
+    const skillDir = `${cwd}/.jig/skills`;
+    const dirFiles = await readdir(skillDir);
+    const skillFiles = dirFiles.filter((file) => file.endsWith(".md"));
+
+    for (const file of skillFiles) {
+      const content = await readFile(`${skillDir}/${file}`, "utf-8");
+      const parts = content.split("---")[1];
+      const name = parts?.split("\n")[1];
+      const description = parts?.split("\n")[2];
+      if (
+        name?.split(" ")[0] != "name:" ||
+        description?.split(" ")[0] != "description:"
+      )
+        continue;
+
+      skills.push({
+        name: name.slice(5).trim(), // content after "name:"
+        description: description.slice(12).trim(), // content after "description:"
+      });
+    }
+
+    SKILLS = `# SKILLS:
+A skill is a specialized information you can use to do a particular task. Here is the list of skills available (use load_skill tool to load the complete skill body):
+${skills.map((skill) => `${skill.name}: ${skill.description}`).join("\n")}
+`;
+  } catch (error) {}
+
   const prompt = `${INTRODUCTION}
 ${STYLE}
 ${TOOLS}
+${SKILLS}
 ${RULES}
 ${SAFETY}
 ${ENV}
