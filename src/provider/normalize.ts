@@ -5,6 +5,7 @@ import {
   type ChatFunctionTool,
   type ChatMessages,
   type ChatResult,
+  type ChatStreamChunk,
   type ChatToolCall,
   type ChatUsage,
 } from "@openrouter/sdk/models";
@@ -15,6 +16,7 @@ import type {
   FinishReason,
   ProviderResponse,
   Statistics,
+  StreamCallbacks,
   ToolCall,
   ToolSpec,
 } from "./types";
@@ -125,5 +127,52 @@ export function toSdkTool(tool: ToolSpec): ChatFunctionTool {
       description: tool.description,
       parameters: tool.parameters,
     },
+  };
+}
+
+export async function normalizeStream(
+  stream: AsyncIterable<ChatStreamChunk>,
+  callbacks: StreamCallbacks = {},
+): Promise<ProviderResponse> {
+  let text = "";
+  let rawFinish: string | null = null;
+  let usage: ChatUsage | undefined;
+  const calls: { id: string; name: string; args: string }[] = [];
+
+  for await (const chunk of stream) {
+    if (chunk.error) throw new Error(`Stream error: ${chunk.error.message}`);
+    if (chunk.usage) usage = chunk.usage;
+
+    const choice = chunk.choices[0];
+    if (!choice) continue;
+    const delta = choice.delta;
+
+    if (delta.content) {
+      text += delta.content;
+      callbacks.onText?.(delta.content);
+    }
+
+    if (delta.reasoning) callbacks.onReasoning?.(delta.reasoning); // not kept in history
+
+    for (const piece of delta.toolCalls ?? []) {
+      const call = (calls[piece.index] ??= { id: "", name: "", args: "" });
+      call.id += piece.id ?? "";
+      call.name += piece.function?.name ?? "";
+      call.args += piece.function?.arguments ?? "";
+    }
+
+    if (choice.finishReason) rawFinish = choice.finishReason;
+  }
+
+  const toolCalls: ToolCall[] = calls.map((c) => ({
+    toolCallId: c.id,
+    name: c.name,
+    arguments: c.args,
+  }));
+
+  return {
+    message: { type: "assistant", content: text || null, toolCalls },
+    finishReason: normalizeFinishReason(rawFinish),
+    stats: normalizeStats(usage),
   };
 }

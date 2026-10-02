@@ -1,5 +1,5 @@
 import type { AgentMessage } from "../provider";
-import { complete } from "../provider";
+import { completeStream } from "../provider";
 import { runLoop } from "./loop";
 import type { Session } from "../session";
 import { generateSystemPrompt } from "../context/system_prompt";
@@ -7,7 +7,7 @@ import { generateSystemPrompt } from "../context/system_prompt";
 const messages: AgentMessage[] = [
   {
     type: "user",
-    content: "which skills can you see. what are their contents?",
+    content: "what is the meaning of life",
   },
 ];
 
@@ -30,11 +30,11 @@ const systemPrompt = await generateSystemPrompt();
 
 const result = await runLoop({
   messages,
-  complete,
+  complete: completeStream,
   config: {
     maxIterations: 20,
-    maxTokens: 20000,
-    contextWindow: 20000,
+    maxTokens: 200000,
+    contextWindow: 128000,
 
     systemPrompt,
     maxPruneAllowanceRatio: 0.1,
@@ -51,8 +51,3 @@ const result = await runLoop({
     maxOutputChars: 2000,
   },
 });
-
-console.log(
-  "============================ THIS IS THE FINAL RESULT OF THE LOOP CALL ===============================================",
-);
-console.dir(result, { depth: null });

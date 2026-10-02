@@ -1,4 +1,4 @@
-import type { CompleteFunc, UserMessage } from "../provider/types";
+import type { CompleteStreamFunc, UserMessage } from "../provider/types";
 import type { AgentMessage, SystemMessage } from "../provider";
 import type { Compact } from "./types";
 import { truncate } from "../util";
@@ -10,7 +10,7 @@ export const compact: Compact = async (
   signal: AbortSignal,
   compactionModel: string,
   transcriptCapChars: number,
-  complete: CompleteFunc,
+  complete: CompleteStreamFunc,
 ) => {
   // calculate the index of the last assistant message
   let fromLast = messages.length - 1;
@@ -85,11 +85,21 @@ Rules:
   if (fromLast - 1 > previousSummarizedUpTo) {
     console.log("[CALLING COMPACT]");
 
+    const callbacks = {
+      onText: (chunk: string) => {
+        console.log(chunk);
+      },
+      onReasoning: (chunk: string) => {
+        console.log(chunk);
+      },
+    };
+
     const compacted = await complete(
       [sysMsg, userMsg],
       [],
       signal,
       compactionModel,
+      callbacks,
     );
     const text = compacted.message.content;
 

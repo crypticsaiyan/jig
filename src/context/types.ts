@@ -1,4 +1,4 @@
-import type { CompleteFunc } from "../provider/types";
+import type { CompleteStreamFunc } from "../provider/types";
 import type { AgentMessage } from "../provider";
 
 export type PruneMsgs = (
@@ -14,7 +14,7 @@ export type Compact = (
   signal: AbortSignal,
   compactionModel: string,
   transcriptCapChars: number,
-  complete: CompleteFunc,
+  complete: CompleteStreamFunc,
 ) => Promise<
   [summary: AgentMessage, summaryUpTo: number, tokensUsed: number] | null
 >;

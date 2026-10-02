@@ -7,4 +7,4 @@ export type {
   SystemMessage,
 } from "./types";
 
-export { complete } from "./complete";
+export { complete, completeStream } from "./complete";

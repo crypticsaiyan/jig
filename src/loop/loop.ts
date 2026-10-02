@@ -27,6 +27,14 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
   let iterations = 0;
   let tokensUsed = 0;
   let lastPromptTokens = 0;
+  const callbacks = {
+    onText: (chunk: string) => {
+      process.stdout.write(chunk);
+    },
+    onReasoning: (chunk: string) => {
+      process.stdout.write("\x1b[2m" + chunk + "\x1b[0m");
+    },
+  };
 
   while (true) {
     if (ctx.signal.aborted) {
@@ -104,6 +112,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         generateToolsArray(),
         ctx.signal,
         input.config.loopModel,
+        callbacks,
       );
     } catch (error) {
       if (ctx.signal.aborted)
@@ -121,11 +130,11 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     lastPromptTokens = completion.stats.promptTokens;
 
     // console.log(messages);
-    console.dir(lastMessageView, { depth: null });
-    console.log(
-      "Context %: ",
-      (lastPromptTokens / input.config.contextWindow) * 100,
-    );
+    //  console.dir(lastMessageView, { depth: null });
+    //  console.log(
+    //    "Context %: ",
+    //    (lastPromptTokens / input.config.contextWindow) * 100,
+    //  );
     messages.push(completion.message);
     lastMessageView.push(completion.message);
 

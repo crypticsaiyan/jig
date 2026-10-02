@@ -63,3 +63,17 @@ export type CompleteFunc = (
   signal: AbortSignal,
   model: string,
 ) => Promise<ProviderResponse>;
+
+export type StreamCallbacks = {
+  onText?: (chunk: string) => void;
+  onReasoning?: (chunk: string) => void;
+};
+
+export type CompleteStreamFunc = (
+  // generates the next completion
+  messages: AgentMessage[],
+  tools: ToolSpec[],
+  signal: AbortSignal,
+  model: string,
+  callbacks: StreamCallbacks,
+) => Promise<ProviderResponse>;

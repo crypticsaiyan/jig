@@ -1,5 +1,5 @@
 import type { AgentMessage } from "../provider";
-import type { CompleteFunc, SystemMessage } from "../provider/types";
+import type { CompleteStreamFunc, SystemMessage } from "../provider/types";
 import type { ToolContext } from "../tool/types";
 
 // dependency injecting interfaces for loop
@@ -21,7 +21,7 @@ export interface LoopConfig {
 // loop input format
 export interface LoopInput {
   messages: AgentMessage[];
-  complete: CompleteFunc;
+  complete: CompleteStreamFunc;
   config: LoopConfig;
   ctx: ToolContext;
 }
