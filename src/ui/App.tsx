@@ -8,6 +8,12 @@ import type { LoopState } from "../loop/types";
 import type { Session } from "../session";
 import { summarizeArgs } from "./summarize";
 import { ItemView } from "./ItemView";
+import {
+  optionsFor,
+  PermissionPrompt,
+  type AskRequest,
+} from "./PermissionPrompt";
+import type { UserDecision, Asker } from "../permission/types";
 
 const session: Session = {
   permissions: {
@@ -32,6 +38,8 @@ export function App({ systemPrompt }: Props) {
   const loopState = useRef<LoopState | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
   const liveRef = useRef("");
+  const [ask, setAsk] = useState<AskRequest | null>(null);
+  const [selected, setSelected] = useState(0);
 
   function push(kind: "user" | "assistant" | "error", text: string) {
     const id = nextId++;
@@ -48,6 +56,17 @@ export function App({ systemPrompt }: Props) {
     liveRef.current = "";
     setLiveText("");
     if (text) push("assistant", text);
+  }
+
+  const asker: Asker = (key, decision) =>
+    new Promise<UserDecision>((resolve) => {
+      setSelected(0);
+      setAsk({ key, decision, resolve });
+    });
+
+  function answer(decision: UserDecision) {
+    ask?.resolve(decision);
+    setAsk(null);
   }
 
   async function submit(text: string) {
@@ -74,13 +93,13 @@ export function App({ systemPrompt }: Props) {
           maxPruneAllowanceRatio: 0.1,
           compactionRatio: 0.9,
           pruneRatio: 0.5,
-          loopModel: "openai/gpt-oss-120b",
+          loopModel: "openrouter/free",
           compactionModel: "openrouter/free",
           transcriptCapChars: 2000,
         },
         ctx: {
           session,
-          asker: async () => "allow-once",
+          asker,
           signal: controller.signal,
           maxOutputChars: 2000,
         },
@@ -128,6 +147,26 @@ export function App({ systemPrompt }: Props) {
   }
 
   useInput((char, key) => {
+    if (ask) {
+      const options = optionsFor(ask.decision);
+      if (key.ctrl && char === "c") {
+        answer("deny"); // free the awaiting promise first
+        abortRef.current?.abort();
+        return;
+      }
+      if (key.upArrow) {
+        setSelected((s) => (s - 1 + options.length) % options.length);
+      } else if (key.downArrow) {
+        setSelected((s) => (s + 1) % options.length);
+      } else if (key.return) {
+        const chosen = options[selected];
+        if (chosen) answer(chosen.value);
+      } else if (key.escape) {
+        answer("deny");
+      }
+      return;
+    }
+
     if (key.ctrl && char === "c") {
       if (running) abortRef.current?.abort();
       else exit();
@@ -169,6 +208,8 @@ export function App({ systemPrompt }: Props) {
           ) : null}
         </Box>
       )}
+
+      {ask && <PermissionPrompt request={ask} selected={selected} />}
 
       <Box>
         <Text color={running ? "gray" : "cyan"}>{"> "}</Text>
