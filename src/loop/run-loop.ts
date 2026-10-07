@@ -7,7 +7,8 @@ import { generateSystemPrompt } from "../context/system_prompt";
 const messages: AgentMessage[] = [
   {
     type: "user",
-    content: "what is the meaning of life",
+    content:
+      "Make a simple calculator website using a html, css and js file. Do this in a directory named calculator.",
   },
 ];
 
@@ -50,4 +51,15 @@ const result = await runLoop({
     signal: controller.signal,
     maxOutputChars: 2000,
   },
+  events: {
+    // events will call ink funcs
+    onText: (chunk) => {
+      console.log(chunk);
+    },
+    onReasoning: (chunk) => {
+      console.log(chunk);
+    },
+  },
 });
+
+console.log(result);

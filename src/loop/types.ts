@@ -1,5 +1,9 @@
 import type { AgentMessage } from "../provider";
-import type { CompleteStreamFunc, SystemMessage } from "../provider/types";
+import type {
+  CompleteStreamFunc,
+  SystemMessage,
+  ToolCall,
+} from "../provider/types";
 import type { ToolContext } from "../tool/types";
 
 // dependency injecting interfaces for loop
@@ -24,6 +28,8 @@ export interface LoopInput {
   complete: CompleteStreamFunc;
   config: LoopConfig;
   ctx: ToolContext;
+  events?: LoopEvents;
+  state?: LoopState | undefined;
 }
 
 export type StopReason =
@@ -41,5 +47,22 @@ export interface LoopOutput {
   stopReason: StopReason;
   iterations: number;
   lastPromptTokens: number;
+  tokensUsed: number;
   lastMessageView: AgentMessage[];
+  state: LoopState;
+}
+
+export interface LoopEvents {
+  onText?: (chunk: string) => void;
+  onReasoning?: (chunk: string) => void;
+  onToolStart?: (call: ToolCall) => void;
+  onToolResult?: (call: ToolCall, result: string) => void;
+}
+
+export interface LoopState {
+  messages: AgentMessage[]; // raw history, no system prompt
+  view: AgentMessage[];
+  summary: AgentMessage;
+  summarizedUpTo: number;
+  lastPromptTokens: number;
 }

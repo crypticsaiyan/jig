@@ -39,7 +39,7 @@ export const completeStream: CompleteStreamFunc = async (
   tools: ToolSpec[] = [],
   signal: AbortSignal,
   model: string,
-  callbacks: StreamCallbacks,
+  callbacks?: StreamCallbacks,
 ): Promise<ProviderResponse> => {
   const stream = await client.chat.send(
     {

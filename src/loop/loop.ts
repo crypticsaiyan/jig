@@ -4,7 +4,7 @@ import type { AgentMessage, SystemMessage } from "../provider";
 import { generateToolsArray } from "../tool";
 import { dispatchTool } from "./dispatch";
 import type { ToolContext } from "../tool/types";
-import type { LoopInput, LoopOutput } from "./types";
+import type { LoopInput, LoopOutput, LoopState, StopReason } from "./types";
 
 function buildMsgView(
   systemPrompt: SystemMessage,
@@ -20,41 +20,46 @@ function buildMsgView(
 export async function runLoop(input: LoopInput): Promise<LoopOutput> {
   const ctx: ToolContext = input.ctx;
   const cfg = input.config;
-  const messages: Array<AgentMessage> = [cfg.systemPrompt, ...input.messages];
-  let lastMessageView: AgentMessage[] = [...messages];
-  let previousSummary: AgentMessage = { type: "assistant", content: "" };
-  let previousSummarizedUpTo = -1; // inclusive (index of last summarized msg)
+  const state = input.state;
+
+  const messages: Array<AgentMessage> = [
+    ...(state?.messages ?? []),
+    ...input.messages,
+  ];
+  let lastMessageView: AgentMessage[] = [
+    ...(state?.view ?? [cfg.systemPrompt]),
+    ...input.messages,
+  ];
+  let previousSummary: AgentMessage = state
+    ? state.summary
+    : { type: "assistant", content: "" };
+  let previousSummarizedUpTo = state ? state.summarizedUpTo : -1; // inclusive (index of last summarized msg)
+  let lastPromptTokens = state ? state.lastPromptTokens : 0;
   let iterations = 0;
   let tokensUsed = 0;
-  let lastPromptTokens = 0;
-  const callbacks = {
-    onText: (chunk: string) => {
-      process.stdout.write(chunk);
+
+  const finish = (stopReason: StopReason): LoopOutput => ({
+    messages,
+    stopReason,
+    iterations,
+    lastPromptTokens,
+    lastMessageView,
+    tokensUsed,
+    state: {
+      messages,
+      view: lastMessageView,
+      summary: previousSummary,
+      summarizedUpTo: previousSummarizedUpTo,
+      lastPromptTokens,
     },
-    onReasoning: (chunk: string) => {
-      process.stdout.write("\x1b[2m" + chunk + "\x1b[0m");
-    },
-  };
+  });
 
   while (true) {
     if (ctx.signal.aborted) {
-      return {
-        messages,
-        stopReason: "interrupted",
-        iterations,
-        lastPromptTokens,
-        lastMessageView,
-      };
+      return finish("interrupted");
     }
-    console.log("Running loop ", iterations);
     if (iterations >= input.config.maxIterations) {
-      return {
-        messages,
-        stopReason: "max_iterations",
-        iterations,
-        lastPromptTokens,
-        lastMessageView,
-      };
+      return finish("max_iterations");
     }
 
     // prune if >= 50% ctxwindow
@@ -93,14 +98,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
           tokensUsed += compactionTokensUsed;
         }
       } catch (error) {
-        if (ctx.signal.aborted)
-          return {
-            messages,
-            stopReason: "interrupted",
-            iterations,
-            lastPromptTokens,
-            lastMessageView,
-          };
+        if (ctx.signal.aborted) return finish("interrupted");
         throw error;
       }
     }
@@ -112,17 +110,10 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         generateToolsArray(),
         ctx.signal,
         input.config.loopModel,
-        callbacks,
+        input.events,
       );
     } catch (error) {
-      if (ctx.signal.aborted)
-        return {
-          messages,
-          stopReason: "interrupted",
-          iterations,
-          lastPromptTokens,
-          lastMessageView,
-        };
+      if (ctx.signal.aborted) return finish("interrupted");
       throw error;
     }
 
@@ -145,19 +136,14 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         const toolCallResults = await dispatchTool(
           completion.message.toolCalls,
           ctx,
+          input.events,
         );
         for (const result of toolCallResults) {
           messages.push(result);
           lastMessageView.push(result);
         }
       } else {
-        return {
-          messages,
-          stopReason: "error",
-          iterations,
-          lastPromptTokens,
-          lastMessageView,
-        };
+        return finish("error");
         // TODO: add a callback func to handle interrupts
       }
     } else if (
@@ -166,22 +152,10 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
       finishReason === "length" ||
       finishReason === "content_filter"
     ) {
-      return {
-        messages,
-        stopReason: finishReason,
-        iterations,
-        lastPromptTokens,
-        lastMessageView,
-      };
+      return finish(finishReason);
     }
     if (tokensUsed > input.config.maxTokens) {
-      return {
-        messages,
-        stopReason: "max_tokens",
-        iterations,
-        lastPromptTokens,
-        lastMessageView,
-      };
+      return finish("max_tokens");
     }
     iterations++;
   }

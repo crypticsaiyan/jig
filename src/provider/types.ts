@@ -75,5 +75,5 @@ export type CompleteStreamFunc = (
   tools: ToolSpec[],
   signal: AbortSignal,
   model: string,
-  callbacks: StreamCallbacks,
+  callbacks?: StreamCallbacks,
 ) => Promise<ProviderResponse>;

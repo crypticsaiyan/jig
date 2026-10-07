@@ -80,33 +80,18 @@ Rules:
     type: "user",
     content: `${previous}Messages to compact:\n${lines.join("\n")}`,
   };
-  console.log(userMsg);
 
   if (fromLast - 1 > previousSummarizedUpTo) {
-    console.log("[CALLING COMPACT]");
-
-    const callbacks = {
-      onText: (chunk: string) => {
-        console.log(chunk);
-      },
-      onReasoning: (chunk: string) => {
-        console.log(chunk);
-      },
-    };
-
     const compacted = await complete(
       [sysMsg, userMsg],
       [],
       signal,
       compactionModel,
-      callbacks,
     );
     const text = compacted.message.content;
 
     if (!text || compacted.finishReason === "length")
       throw new Error("Error compacting: empty or truncated summary");
-
-    console.log(compacted.message);
 
     return [
       { type: "user", content: `[SUMMARIZED]\n${text}` },
