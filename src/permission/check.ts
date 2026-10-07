@@ -1,9 +1,11 @@
+import { resolve } from "node:path";
 import type { Tool } from "../tool/types";
-import { checkCommand, checkPath } from "./match";
+import { checkCommand, checkEdit, checkPath } from "./match";
 import type {
   Allowed,
   Asker,
   PermDecision,
+  PermKey,
   PermSession,
   UserDecision,
 } from "./types";
@@ -18,8 +20,13 @@ export async function checkPermission(
   session: PermSession,
   asker: Asker,
 ): Promise<Allowed> {
-  const key = tool.getPermissionKey(args);
-  if (key === undefined) return { ok: true };
+  const rawKey = tool.getPermissionKey(args);
+  if (rawKey === undefined) return { ok: true };
+  // edit paths are resolved so "src/a.ts" and "./src/a.ts" share one allowlist rule
+  const key: PermKey =
+    rawKey.kind === "edit"
+      ? { ...rawKey, value: resolve(session.projectRoot, rawKey.value) }
+      : rawKey;
   let decision: PermDecision;
   switch (key.kind) {
     case "command":
@@ -27,6 +34,9 @@ export async function checkPermission(
       break;
     case "path":
       decision = checkPath(key.value, session.projectRoot);
+      break;
+    case "edit":
+      decision = checkEdit(key.value, session.projectRoot, session.allowList);
       break;
     default:
       decision = "ask";

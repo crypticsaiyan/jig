@@ -16,7 +16,7 @@ export const strReplace: Tool<
       .describe("exact text to find, copied from the file, must be unique"),
     newString: z.string().describe("text to replace it with"),
   }),
-  getPermissionKey: ({ path }) => ({ kind: "path", value: path }),
+  getPermissionKey: ({ path }) => ({ kind: "edit", value: path }),
   execute: async ({ path, oldString, newString }) => {
     try {
       let content = "";

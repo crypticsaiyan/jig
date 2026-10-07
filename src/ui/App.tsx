@@ -148,7 +148,7 @@ export function App({ systemPrompt }: Props) {
 
   useInput((char, key) => {
     if (ask) {
-      const options = optionsFor(ask.decision);
+      const options = optionsFor(ask.key, ask.decision);
       if (key.ctrl && char === "c") {
         answer("deny"); // free the awaiting promise first
         abortRef.current?.abort();

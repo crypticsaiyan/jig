@@ -9,11 +9,28 @@ export type AskRequest = {
 
 type Option = { label: string; value: UserDecision };
 
+const LABELS: Record<PermKey["kind"], string> = {
+  command: "run: ",
+  path: "path: ",
+  edit: "edit: ",
+};
+
 // always-ask actions are never saved to the allowlist, so only offer once or deny
-export function optionsFor(decision: "ask" | "always-ask"): Option[] {
+export function optionsFor(
+  key: PermKey,
+  decision: "ask" | "always-ask",
+): Option[] {
   if (decision === "always-ask") {
     return [
       { label: "allow once", value: "allow-once" },
+      { label: "deny", value: "deny" },
+    ];
+  }
+  // a prefix rule makes no sense for a file path
+  if (key.kind === "edit") {
+    return [
+      { label: "allow once", value: "allow-once" },
+      { label: "always allow edits to this file", value: "allow-always-exact" },
       { label: "deny", value: "deny" },
     ];
   }
@@ -33,7 +50,7 @@ export function PermissionPrompt({
   selected: number;
 }) {
   const risky = request.decision === "always-ask";
-  const options = optionsFor(request.decision);
+  const options = optionsFor(request.key, request.decision);
   return (
     <Box
       flexDirection="column"
@@ -47,7 +64,7 @@ export function PermissionPrompt({
           : "Permission needed"}
       </Text>
       <Text>
-        {request.key.kind === "command" ? "run: " : "path: "}
+        {LABELS[request.key.kind]}
         {request.key.value}
       </Text>
       {options.map((o, i) => (

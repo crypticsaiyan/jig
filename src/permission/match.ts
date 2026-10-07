@@ -34,3 +34,15 @@ export function checkPath(rawPath: string, projectRoot: string): PermDecision {
   const insideRoot = !rel.startsWith("..");
   return insideRoot ? "allowed" : "always-ask";
 }
+
+// edits inside the project ask unless allowlisted, edits outside always ask
+export function checkEdit(
+  absolutePath: string,
+  projectRoot: string,
+  rules: RegExp[],
+): PermDecision {
+  if (checkPath(absolutePath, projectRoot) === "always-ask")
+    return "always-ask";
+  if (matchesAllowed(absolutePath, rules)) return "allowed";
+  return "ask";
+}
