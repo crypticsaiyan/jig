@@ -1,6 +1,5 @@
 import type { z, ZodRawShape } from "zod";
-import type { Asker, PermKey } from "../permission/types";
-import type { Session } from "../session";
+import type { Asker, PermKey, PermSession } from "../permission/types";
 
 export type Tool<
   TParams extends ZodRawShape = ZodRawShape,
@@ -19,7 +18,7 @@ export type Tool<
 };
 
 export type ToolContext = {
-  session: Session;
+  permissions: PermSession;
   asker: Asker;
   signal: AbortSignal;
   maxOutputChars: number;

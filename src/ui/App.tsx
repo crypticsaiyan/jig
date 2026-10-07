@@ -5,7 +5,6 @@ import type { SystemMessage } from "../provider";
 import { completeStream } from "../provider";
 import { runLoop } from "../loop/loop";
 import type { LoopState } from "../loop/types";
-import type { Session } from "../session";
 import { summarizeArgs } from "./summarize";
 import { ItemView } from "./ItemView";
 import {
@@ -13,13 +12,12 @@ import {
   PermissionPrompt,
   type AskRequest,
 } from "./PermissionPrompt";
-import type { UserDecision, Asker } from "../permission/types";
+import type { UserDecision, Asker, PermSession } from "../permission/types";
+import { createSession, saveSession } from "../session/store";
 
-const session: Session = {
-  permissions: {
-    allowList: [],
-    projectRoot: process.cwd(),
-  },
+const permissions: PermSession = {
+  allowList: [],
+  projectRoot: process.cwd(),
 };
 
 type Props = { systemPrompt: SystemMessage };
@@ -40,6 +38,7 @@ export function App({ systemPrompt }: Props) {
   const liveRef = useRef("");
   const [ask, setAsk] = useState<AskRequest | null>(null);
   const [selected, setSelected] = useState(0);
+  const sessionRef = useRef(createSession(""));
 
   function push(kind: "user" | "assistant" | "error", text: string) {
     const id = nextId++;
@@ -98,10 +97,10 @@ export function App({ systemPrompt }: Props) {
           transcriptCapChars: 2000,
         },
         ctx: {
-          session,
           asker,
           signal: controller.signal,
           maxOutputChars: 2000,
+          permissions,
         },
         events: {
           onText: (c) => {
@@ -129,6 +128,17 @@ export function App({ systemPrompt }: Props) {
       });
 
       loopState.current = result.state;
+      sessionRef.current.state = result.state;
+      sessionRef.current.updatedAt = Date.now().toString();
+      if (sessionRef.current.title === "") {
+        sessionRef.current.title = text.length > 50 ? text.slice(0, 50) : text;
+      }
+
+      try {
+        await saveSession(sessionRef.current);
+      } catch (error) {
+        push("error", "cant save session: " + error);
+      }
 
       flushText(); // final answer
 

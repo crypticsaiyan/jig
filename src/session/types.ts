@@ -1,5 +1,9 @@
-import type { PermSession } from "../permission/types";
+import type { LoopState } from "../loop/types";
 
 export type Session = {
-  permissions: PermSession;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  state: LoopState | undefined;
 };

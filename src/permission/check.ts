@@ -17,7 +17,7 @@ function escapeRegex(text: string): string {
 export async function checkPermission(
   tool: Tool<any, unknown>,
   args: any,
-  session: PermSession,
+  permissions: PermSession,
   asker: Asker,
 ): Promise<Allowed> {
   const rawKey = tool.getPermissionKey(args);
@@ -25,18 +25,22 @@ export async function checkPermission(
   // edit paths are resolved so "src/a.ts" and "./src/a.ts" share one allowlist rule
   const key: PermKey =
     rawKey.kind === "edit"
-      ? { ...rawKey, value: resolve(session.projectRoot, rawKey.value) }
+      ? { ...rawKey, value: resolve(permissions.projectRoot, rawKey.value) }
       : rawKey;
   let decision: PermDecision;
   switch (key.kind) {
     case "command":
-      decision = checkCommand(key.value, session.allowList);
+      decision = checkCommand(key.value, permissions.allowList);
       break;
     case "path":
-      decision = checkPath(key.value, session.projectRoot);
+      decision = checkPath(key.value, permissions.projectRoot);
       break;
     case "edit":
-      decision = checkEdit(key.value, session.projectRoot, session.allowList);
+      decision = checkEdit(
+        key.value,
+        permissions.projectRoot,
+        permissions.allowList,
+      );
       break;
     default:
       decision = "ask";
@@ -50,17 +54,19 @@ export async function checkPermission(
     };
   }
 
-  // avoid adding to session on always-ask toolCalls
+  // avoid adding to permissions on always-ask toolCalls
   if (decision === "ask") {
     const trimmed = key.value.trim();
     if (userDecision === "allow-always-exact") {
       // add exact string to allowList
-      session.allowList.push(new RegExp(`^${escapeRegex(trimmed)}$`));
+      permissions.allowList.push(new RegExp(`^${escapeRegex(trimmed)}$`));
     } else if (userDecision === "allow-always-prefix") {
       // add prefix * to allowList regex
       const base = trimmed.split(/\s+/)[0];
       if (base)
-        session.allowList.push(new RegExp(`^${escapeRegex(base)}(\\s.*)?$`));
+        permissions.allowList.push(
+          new RegExp(`^${escapeRegex(base)}(\\s.*)?$`),
+        );
     }
   }
   return { ok: true };

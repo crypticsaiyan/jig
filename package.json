@@ -8,8 +8,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun src/provider/index.ts",
-    "watch": "bun --watch src/index.ts",
+    "dev": "bun src/index.tsx",
+    "watch": "bun --watch src/index.tsx",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

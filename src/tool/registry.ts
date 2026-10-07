@@ -56,7 +56,7 @@ export async function runTool(
   const allowedToRun: Allowed = await checkPermission(
     tool,
     parsedArgs.data,
-    ctx.session.permissions,
+    ctx.permissions,
     ctx.asker,
   );
 
