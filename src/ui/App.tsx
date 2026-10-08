@@ -4,7 +4,6 @@ import type { Item } from "./types";
 import type { SystemMessage } from "../provider";
 import { completeStream } from "../provider";
 import { runLoop } from "../loop/loop";
-import type { LoopState } from "../loop/types";
 import { summarizeArgs } from "./summarize";
 import { ItemView } from "./ItemView";
 import {
@@ -13,19 +12,20 @@ import {
   type AskRequest,
 } from "./PermissionPrompt";
 import type { UserDecision, Asker, PermSession } from "../permission/types";
-import { createSession, saveSession } from "../session/store";
+import { saveSession } from "../session/store";
+import type { Session } from "../session";
 
 const permissions: PermSession = {
   allowList: [],
   projectRoot: process.cwd(),
 };
 
-type Props = { systemPrompt: SystemMessage };
+type Props = { systemPrompt: SystemMessage; session: Session };
 type LiveTool = { name: string; summary: string };
 
 let nextId = 1;
 
-export function App({ systemPrompt }: Props) {
+export function App({ systemPrompt, session }: Props) {
   const { exit } = useApp();
   const [items, setItems] = useState<Item[]>([{ id: 0, kind: "banner" }]); // static items
   const [input, setInput] = useState("");
@@ -33,12 +33,11 @@ export function App({ systemPrompt }: Props) {
   const [liveReasoning, setLiveReasoning] = useState("");
   const [liveTool, setLiveTool] = useState<LiveTool | null>(null);
   const [running, setRunning] = useState(false);
-  const loopState = useRef<LoopState | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
   const liveRef = useRef("");
   const [ask, setAsk] = useState<AskRequest | null>(null);
   const [selected, setSelected] = useState(0);
-  const sessionRef = useRef(createSession(""));
+  const sessionRef = useRef(session);
 
   function push(kind: "user" | "assistant" | "error", text: string) {
     const id = nextId++;
@@ -82,7 +81,7 @@ export function App({ systemPrompt }: Props) {
     try {
       const result = await runLoop({
         messages: [{ type: "user", content: text }],
-        state: loopState.current,
+        state: sessionRef.current.state,
         complete: completeStream,
         config: {
           maxIterations: 20,
@@ -127,7 +126,6 @@ export function App({ systemPrompt }: Props) {
         },
       });
 
-      loopState.current = result.state;
       sessionRef.current.state = result.state;
       sessionRef.current.updatedAt = Date.now().toString();
       if (sessionRef.current.title === "") {

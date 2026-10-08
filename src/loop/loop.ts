@@ -4,16 +4,13 @@ import type { AgentMessage, SystemMessage } from "../provider";
 import { generateToolsArray } from "../tool";
 import { dispatchTool } from "./dispatch";
 import type { ToolContext } from "../tool/types";
-import type { LoopInput, LoopOutput, LoopState, StopReason } from "./types";
+import type { LoopInput, LoopOutput, StopReason } from "./types";
 
 function buildMsgView(
-  systemPrompt: SystemMessage,
   summary: AgentMessage,
   summarizedUpTo: number,
   messages: AgentMessage[],
 ): AgentMessage[] {
-  if (systemPrompt.content.length)
-    return [systemPrompt, summary, ...messages.slice(summarizedUpTo + 1)];
   return [summary, ...messages.slice(summarizedUpTo + 1)];
 }
 
@@ -27,7 +24,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     ...input.messages,
   ];
   let lastMessageView: AgentMessage[] = [
-    ...(state?.view ?? [cfg.systemPrompt]),
+    ...(state?.view ?? []),
     ...input.messages,
   ];
   let previousSummary: AgentMessage = state
@@ -85,12 +82,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         );
         if (summaryResult) {
           const [summary, summarizedUpTo, compactionTokensUsed] = summaryResult;
-          lastMessageView = buildMsgView(
-            cfg.systemPrompt,
-            summary,
-            summarizedUpTo,
-            messages,
-          );
+          lastMessageView = buildMsgView(summary, summarizedUpTo, messages);
 
           previousSummary = summary;
           previousSummarizedUpTo = summarizedUpTo;
@@ -106,7 +98,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     let completion;
     try {
       completion = await input.complete(
-        lastMessageView,
+        [cfg.systemPrompt, ...lastMessageView],
         generateToolsArray(),
         ctx.signal,
         input.config.loopModel,

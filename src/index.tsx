@@ -1,7 +1,21 @@
 import { render } from "ink";
 import { App } from "./ui/App";
 import { generateSystemPrompt } from "./context/system_prompt";
+import { createSession, loadLatestSession } from "./session/store";
 
 const systemPrompt = await generateSystemPrompt();
 
-render(<App systemPrompt={systemPrompt} />, { exitOnCtrlC: false });
+const resume = process.argv.includes("--continue");
+const loaded = resume ? await loadLatestSession() : undefined;
+
+if (resume && !loaded) {
+  console.log("no saved session found, starting fresh session");
+} else if (resume && loaded) {
+  console.log(`resuming session: ${loaded.id}`);
+}
+
+const session = loaded ?? createSession("");
+
+render(<App systemPrompt={systemPrompt} session={session} />, {
+  exitOnCtrlC: false,
+});

@@ -24,7 +24,7 @@ export interface LoopConfig {
 
 // loop input format
 export interface LoopInput {
-  messages: AgentMessage[];
+  messages: AgentMessage[]; // new user query
   complete: CompleteStreamFunc;
   config: LoopConfig;
   ctx: ToolContext;
