@@ -1,4 +1,5 @@
 import type { Session } from "./types";
+import { PATHS } from "../config";
 import {
   mkdir,
   readdir,
@@ -8,7 +9,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 
-const SESSION_DIR = `${process.cwd()}/.jig/sessions`;
+const SESSION_DIR = PATHS.sessionsDir;
 const LATEST_VERSION = 0;
 
 export function createSession(title: string): Session {

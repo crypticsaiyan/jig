@@ -15,6 +15,7 @@ import type { UserDecision, Asker, PermSession } from "../permission/types";
 import { saveSession } from "../session/store";
 import type { Session } from "../session";
 import { messagesToItems } from "./history";
+import { CONFIG, TOOLS, UI } from "../config";
 
 const permissions: PermSession = {
   allowList: [],
@@ -87,22 +88,12 @@ export function App({ systemPrompt, session }: Props) {
         messages: [{ type: "user", content: text }],
         state: sessionRef.current.state,
         complete: completeStream,
-        config: {
-          maxIterations: 20,
-          maxTokens: 200000,
-          contextWindow: 128000,
-          systemPrompt,
-          maxPruneAllowanceRatio: 0.1,
-          compactionRatio: 0.9,
-          pruneRatio: 0.5,
-          loopModel: "openrouter/free",
-          compactionModel: "openrouter/free",
-          transcriptCapChars: 2000,
-        },
+        systemPrompt,
+        config: CONFIG,
         ctx: {
           asker,
           signal: controller.signal,
-          maxOutputChars: 2000,
+          maxOutputChars: TOOLS.maxOutputChars,
           permissions,
         },
         events: {
@@ -133,7 +124,7 @@ export function App({ systemPrompt, session }: Props) {
       sessionRef.current.state = result.state;
       sessionRef.current.updatedAt = Date.now().toString();
       if (sessionRef.current.title === "") {
-        sessionRef.current.title = text.length > 50 ? text.slice(0, 50) : text;
+        sessionRef.current.title = text.slice(0, UI.titleMaxChars);
       }
 
       try {
@@ -207,7 +198,7 @@ export function App({ systemPrompt, session }: Props) {
       {running && (
         <Box flexDirection="column">
           {liveReasoning ? (
-            <Text dimColor>{liveReasoning.slice(-300)}</Text>
+            <Text dimColor>{liveReasoning.slice(-UI.reasoningTailChars)}</Text>
           ) : null}
           {liveText ? <Text>{liveText}</Text> : null}
           {liveTool ? (

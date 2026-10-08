@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import type { SystemMessage } from "../provider";
 import type { Skill } from "./types";
+import { PATHS } from "../config";
 
 export const generateSystemPrompt = async (): Promise<SystemMessage> => {
   const INTRODUCTION = `You are jig, an AI coding assistant that helps the user with software engineering tasks.
@@ -47,7 +48,7 @@ export const generateSystemPrompt = async (): Promise<SystemMessage> => {
 
   try {
     let skills: Skill[] = [];
-    const skillDir = `${cwd}/.jig/skills`;
+    const skillDir = PATHS.skillsDir;
     const dirFiles = await readdir(skillDir);
     const skillFiles = dirFiles.filter((file) => file.endsWith(".md"));
 

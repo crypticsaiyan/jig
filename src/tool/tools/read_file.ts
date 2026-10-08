@@ -1,8 +1,9 @@
 import { readFile } from "node:fs/promises";
 import z from "zod";
 import type { Tool } from "../types";
+import { TOOLS } from "../../config";
 
-const DEFAULT_LIMIT = 2000;
+const DEFAULT_LIMIT = TOOLS.readFileDefaultLimit;
 
 export const fileRead: Tool<
   {
@@ -13,8 +14,7 @@ export const fileRead: Tool<
   { content: string; totalLines: number; truncated: boolean }
 > = {
   name: "read_file",
-  description:
-    "Read a text file. Returns content, totalLines and truncated. Reads up to 2000 lines by default, use offset and limit to page through larger files. Read a file before editing it. Fails if the path does not exist.",
+  description: `Read a text file. Returns content, totalLines and truncated. Reads up to ${DEFAULT_LIMIT} lines by default, use offset and limit to page through larger files. Read a file before editing it. Fails if the path does not exist.`,
   parameters: z.object({
     path: z
       .string()

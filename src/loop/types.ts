@@ -16,7 +16,6 @@ export interface LoopConfig {
   pruneRatio: number; // limit after which prune fires
   maxPruneAllowanceRatio: number; // max ctx allowed (latest max not pruned)
   compactionRatio: number; // limit after which compaction fires
-  systemPrompt: SystemMessage;
   compactionModel: string;
   loopModel: string;
   transcriptCapChars: number;
@@ -25,6 +24,7 @@ export interface LoopConfig {
 // loop input format
 export interface LoopInput {
   messages: AgentMessage[]; // new user query
+  systemPrompt: SystemMessage; // built at runtime, kept out of config and state
   complete: CompleteStreamFunc;
   config: LoopConfig;
   ctx: ToolContext;

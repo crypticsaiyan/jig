@@ -1,6 +1,6 @@
 import { compact } from "../context/compact";
 import { prune } from "../context/prune";
-import type { AgentMessage, SystemMessage } from "../provider";
+import type { AgentMessage } from "../provider";
 import { generateToolsArray } from "../tool";
 import { dispatchTool } from "./dispatch";
 import type { ToolContext } from "../tool/types";
@@ -59,7 +59,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
       return finish("max_iterations");
     }
 
-    // prune if >= 50% ctxwindow
+    // prune past pruneRatio of the context window
     if (lastPromptTokens >= cfg.contextWindow * cfg.pruneRatio) {
       lastMessageView = prune(
         lastMessageView,
@@ -68,7 +68,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
       );
     }
 
-    // compact if >= 90% ctxwindow
+    // compact past compactionRatio of the context window
     if (lastPromptTokens >= cfg.contextWindow * cfg.compactionRatio) {
       try {
         const summaryResult = await compact(
@@ -98,7 +98,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     let completion;
     try {
       completion = await input.complete(
-        [cfg.systemPrompt, ...lastMessageView],
+        [input.systemPrompt, ...lastMessageView],
         generateToolsArray(),
         ctx.signal,
         input.config.loopModel,
