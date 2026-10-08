@@ -1,6 +1,7 @@
 import { Box, Text } from "ink";
 import { Banner } from "./Banner";
 import type { Item } from "./types";
+import { Markdown } from "./Markdown";
 
 export function ItemView({ item }: { item: Item }) {
   switch (item.kind) {
@@ -17,7 +18,9 @@ export function ItemView({ item }: { item: Item }) {
       return (
         <Box>
           <Text color="green">jig: </Text>
-          <Text>{item.text}</Text>
+          <Box flexDirection="column" flexGrow={1}>
+            <Markdown text={item.text} />
+          </Box>
         </Box>
       );
     case "error":

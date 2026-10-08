@@ -1,1 +1,2 @@
 - make tools atomic
+- add model context window caching

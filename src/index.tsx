@@ -2,6 +2,13 @@ import { render } from "ink";
 import { App } from "./ui/App";
 import { generateSystemPrompt } from "./context/system_prompt";
 import { createSession, loadLatestSession } from "./session/store";
+import { getContextWindow } from "./provider/model";
+import { CONFIG } from "./config";
+
+const config = {
+  ...CONFIG,
+  contextWindow: await getContextWindow(CONFIG.loopModel, CONFIG.contextWindow),
+};
 
 const systemPrompt = await generateSystemPrompt();
 
@@ -16,6 +23,6 @@ if (resume && !loaded) {
 
 const session = loaded ?? createSession("");
 
-render(<App systemPrompt={systemPrompt} session={session} />, {
+render(<App systemPrompt={systemPrompt} session={session} config={config} />, {
   exitOnCtrlC: false,
 });

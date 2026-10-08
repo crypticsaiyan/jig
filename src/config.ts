@@ -7,7 +7,7 @@ export const CONFIG: LoopConfig = {
   maxPruneAllowanceRatio: 0.1,
   compactionRatio: 0.9,
   pruneRatio: 0.5,
-  loopModel: "openrouter/free",
+  loopModel: "openai/gpt-oss-120b",
   compactionModel: "openrouter/free",
   transcriptCapChars: 2000,
 };

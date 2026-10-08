@@ -15,19 +15,25 @@ import type { UserDecision, Asker, PermSession } from "../permission/types";
 import { saveSession } from "../session/store";
 import type { Session } from "../session";
 import { messagesToItems } from "./history";
-import { CONFIG, TOOLS, UI } from "../config";
+import { TOOLS, UI } from "../config";
+import type { LoopConfig } from "../loop/types";
+import { StatusBar } from "./StatusBar";
 
 const permissions: PermSession = {
   allowList: [],
   projectRoot: process.cwd(),
 };
 
-type Props = { systemPrompt: SystemMessage; session: Session };
+type Props = {
+  systemPrompt: SystemMessage;
+  session: Session;
+  config: LoopConfig;
+};
 type LiveTool = { name: string; summary: string };
 
 let nextId = 1;
 
-export function App({ systemPrompt, session }: Props) {
+export function App({ systemPrompt, session, config }: Props) {
   const { exit } = useApp();
   const [items, setItems] = useState<Item[]>(() => [
     { id: 0, kind: "banner" },
@@ -89,7 +95,7 @@ export function App({ systemPrompt, session }: Props) {
         state: sessionRef.current.state,
         complete: completeStream,
         systemPrompt,
-        config: CONFIG,
+        config,
         ctx: {
           asker,
           signal: controller.signal,
@@ -189,6 +195,12 @@ export function App({ systemPrompt, session }: Props) {
     if (char) setInput((prev) => prev + char);
   });
 
+  const lastPromptTokens = sessionRef.current.state?.lastPromptTokens ?? 0;
+  const contextPercent = Math.round(
+    (lastPromptTokens / config.contextWindow) * 100,
+  );
+  const status = ask ? "waiting for permission" : running ? "running" : "idle";
+
   return (
     <>
       <Static items={items}>
@@ -219,6 +231,17 @@ export function App({ systemPrompt, session }: Props) {
         <Text>{input}</Text>
         <Text inverse> </Text>
       </Box>
+
+      <StatusBar
+        model={config.loopModel}
+        contextTokens={lastPromptTokens}
+        contextWindow={config.contextWindow}
+        contextPercent={contextPercent}
+        warnAt={Math.round(config.pruneRatio * 100)}
+        dangerAt={Math.round(config.compactionRatio * 100)}
+        title={sessionRef.current.title}
+        status={status}
+      />
     </>
   );
 }
