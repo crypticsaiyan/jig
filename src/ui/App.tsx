@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Box, Static, Text, useApp, useInput } from "ink";
+import { useEffect, useRef, useState } from "react";
+import { Box, Static, Text, useApp, useInput, useStdout } from "ink";
 import type { Item } from "./types";
 import type { SystemMessage } from "../provider";
 import { completeStream } from "../provider";
@@ -35,6 +35,8 @@ let nextId = 1;
 
 export function App({ systemPrompt, session, config }: Props) {
   const { exit } = useApp();
+  const { stdout } = useStdout();
+  const [resizeKey, setResizeKey] = useState(0); // new key remounts <Static>, reprinting every item
   const [items, setItems] = useState<Item[]>(() => [
     { id: 0, kind: "banner" },
     ...messagesToItems(session.state?.messages ?? [], () => nextId++),
@@ -44,6 +46,23 @@ export function App({ systemPrompt, session, config }: Props) {
   const [liveReasoning, setLiveReasoning] = useState("");
   const [liveTool, setLiveTool] = useState<LiveTool | null>(null);
   const [running, setRunning] = useState(false);
+
+  // finished items are printed once at the current width; after a resize, clear and reprint them
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onResize = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        stdout.write("\x1b[2J\x1b[3J\x1b[H"); // clear screen and scrollback, cursor home
+        setResizeKey((k) => k + 1);
+      }, UI.resizeDebounceMs);
+    };
+    stdout.on("resize", onResize);
+    return () => {
+      clearTimeout(timer);
+      stdout.off("resize", onResize);
+    };
+  }, [stdout]);
   const abortRef = useRef<AbortController | null>(null);
   const liveRef = useRef("");
   const [ask, setAsk] = useState<AskRequest | null>(null);
@@ -203,8 +222,13 @@ export function App({ systemPrompt, session, config }: Props) {
 
   return (
     <>
-      <Static items={items}>
-        {(item) => <ItemView key={item.id} item={item} />}
+      <Static key={resizeKey} items={items}>
+        {(item) => (
+          // Static lays items out without a width limit, so give each one the terminal width
+          <Box key={item.id} width={stdout.columns || 80}>
+            <ItemView item={item} />
+          </Box>
+        )}
       </Static>
 
       {running && (
@@ -227,9 +251,15 @@ export function App({ systemPrompt, session, config }: Props) {
       {ask && <PermissionPrompt request={ask} selected={selected} />}
 
       <Box>
-        <Text color={running ? "gray" : "cyan"}>{"> "}</Text>
-        <Text>{input}</Text>
-        <Text inverse> </Text>
+        <Box flexShrink={0} marginRight={1}>
+          <Text color={running ? "gray" : "cyan"}>{">"}</Text>
+        </Box>
+        <Box flexGrow={1}>
+          <Text>
+            {input}
+            <Text inverse>{"\u00a0"}</Text>
+          </Text>
+        </Box>
       </Box>
 
       <StatusBar

@@ -79,7 +79,9 @@ function List({ token }: { token: Tokens.List }) {
             : "•";
         return (
           <Box key={i}>
-            <Text>{marker} </Text>
+            <Box flexShrink={0} marginRight={1}>
+              <Text>{marker}</Text>
+            </Box>
             <Box flexDirection="column">
               <Blocks tokens={item.tokens} />
             </Box>

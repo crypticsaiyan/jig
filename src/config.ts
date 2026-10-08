@@ -29,4 +29,5 @@ export const UI = {
   titleMaxChars: 50, // session title taken from the first message
   reasoningTailChars: 300, // live reasoning shows only its tail
   toolSummaryChars: 60, // tool line argument summary
+  resizeDebounceMs: 100, // wait for the resize to settle before reprinting
 };
