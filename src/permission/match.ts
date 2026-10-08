@@ -1,7 +1,7 @@
 import type { PermDecision } from "./types";
 import { resolve, relative } from "node:path";
 
-const CHAINING = /&&|\|\||[;|`]|\$\(|>>|<<|[><]/;
+const CHAINING = /&&|\|\||[;|`\n\r]|\$\(|>>|<<|[><]/;
 
 const ALWAYS_ASK: RegExp[] = [
   /\brm\s+-[a-z]*r[a-z]*f\b/i, // rm -rf, rm -fr, etc.

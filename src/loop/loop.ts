@@ -14,6 +14,12 @@ function buildMsgView(
   return [summary, ...messages.slice(summarizedUpTo + 1)];
 }
 
+// tells the model its last turn was cut off, so the next message isn't misread
+const INTERRUPT_NOTE: AgentMessage = {
+  type: "user",
+  content: "[Request interrupted by user]",
+};
+
 export async function runLoop(input: LoopInput): Promise<LoopOutput> {
   const ctx: ToolContext = input.ctx;
   const cfg = input.config;
@@ -35,21 +41,27 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
   let iterations = 0;
   let tokensUsed = 0;
 
-  const finish = (stopReason: StopReason): LoopOutput => ({
-    messages,
-    stopReason,
-    iterations,
-    lastPromptTokens,
-    lastMessageView,
-    tokensUsed,
-    state: {
+  const finish = (stopReason: StopReason): LoopOutput => {
+    if (stopReason === "interrupted") {
+      messages.push(INTERRUPT_NOTE);
+      lastMessageView.push(INTERRUPT_NOTE);
+    }
+    return {
       messages,
-      view: lastMessageView,
-      summary: previousSummary,
-      summarizedUpTo: previousSummarizedUpTo,
+      stopReason,
+      iterations,
       lastPromptTokens,
-    },
-  });
+      lastMessageView,
+      tokensUsed,
+      state: {
+        messages,
+        view: lastMessageView,
+        summary: previousSummary,
+        summarizedUpTo: previousSummarizedUpTo,
+        lastPromptTokens,
+      },
+    };
+  };
 
   while (true) {
     if (ctx.signal.aborted) {
