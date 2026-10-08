@@ -14,3 +14,7 @@ export function summarizeArgs(raw: string): string {
     return "";
   }
 }
+
+export function isToolError(result: string): boolean {
+  return /^(Error|Not allowed)/.test(result);
+}

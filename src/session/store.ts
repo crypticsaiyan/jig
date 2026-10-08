@@ -9,9 +9,11 @@ import {
 } from "node:fs/promises";
 
 const SESSION_DIR = `${process.cwd()}/.jig/sessions`;
+const LATEST_VERSION = 0;
 
 export function createSession(title: string): Session {
   return {
+    version: LATEST_VERSION,
     id: new Date().toISOString(),
     createdAt: Date.now().toString(),
     updatedAt: Date.now().toString(),
@@ -55,7 +57,9 @@ export async function loadLatestSession(): Promise<Session | undefined> {
 
   try {
     const raw = await readFile(`${SESSION_DIR}/${latest}`, "utf-8");
-    return JSON.parse(raw) as Session;
+    const content = JSON.parse(raw) as Session;
+    if (content.version != LATEST_VERSION) return undefined;
+    return content;
   } catch {
     return undefined; // unreadable or broken JSON
   }

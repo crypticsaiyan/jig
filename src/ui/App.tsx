@@ -4,7 +4,7 @@ import type { Item } from "./types";
 import type { SystemMessage } from "../provider";
 import { completeStream } from "../provider";
 import { runLoop } from "../loop/loop";
-import { summarizeArgs } from "./summarize";
+import { isToolError, summarizeArgs } from "./summarize";
 import { ItemView } from "./ItemView";
 import {
   optionsFor,
@@ -14,6 +14,7 @@ import {
 import type { UserDecision, Asker, PermSession } from "../permission/types";
 import { saveSession } from "../session/store";
 import type { Session } from "../session";
+import { messagesToItems } from "./history";
 
 const permissions: PermSession = {
   allowList: [],
@@ -27,7 +28,10 @@ let nextId = 1;
 
 export function App({ systemPrompt, session }: Props) {
   const { exit } = useApp();
-  const [items, setItems] = useState<Item[]>([{ id: 0, kind: "banner" }]); // static items
+  const [items, setItems] = useState<Item[]>(() => [
+    { id: 0, kind: "banner" },
+    ...messagesToItems(session.state?.messages ?? [], () => nextId++),
+  ]); // static items
   const [input, setInput] = useState("");
   const [liveText, setLiveText] = useState("");
   const [liveReasoning, setLiveReasoning] = useState("");
@@ -120,7 +124,7 @@ export function App({ systemPrompt, session }: Props) {
             pushTool(
               call.name,
               summarizeArgs(call.arguments),
-              !/^(Error|Not allowed)/.test(result),
+              !isToolError(result),
             );
           },
         },
