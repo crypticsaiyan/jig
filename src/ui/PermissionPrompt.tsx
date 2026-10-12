@@ -11,7 +11,8 @@ type Option = { label: string; value: UserDecision };
 
 const LABELS: Record<PermKey["kind"], string> = {
   command: "run: ",
-  path: "path: ",
+  path: "write: ",
+  read: "read: ",
   edit: "edit: ",
 };
 

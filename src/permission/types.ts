@@ -1,5 +1,5 @@
 export type PermKey = {
-  kind: "command" | "path" | "edit";
+  kind: "command" | "path" | "edit" | "read";
   value: string;
 };
 

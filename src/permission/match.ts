@@ -1,5 +1,5 @@
 import type { PermDecision } from "./types";
-import { resolve, relative } from "node:path";
+import { basename, resolve, relative } from "node:path";
 
 const CHAINING = /&&|\|\||[;|`\n\r]|\$\(|>>|<<|[><]/;
 
@@ -28,8 +28,23 @@ export function checkCommand(command: string, rules: RegExp[]): PermDecision {
   return "ask";
 }
 
+// files that usually hold secrets; they always ask, even inside the project
+const SENSITIVE: RegExp[] = [
+  /^\.env(\..+)?$/i, // .env, .env.local, .env.production
+  /\.(pem|key|p12|pfx)$/i, // certificates and private keys
+  /^id_(rsa|ecdsa|ed25519|dsa)$/, // ssh private keys
+  /^\.(npmrc|netrc|pgpass)$/, // tokens and passwords
+];
+const NOT_SENSITIVE = /^\.env\.(example|sample|template)$/i;
+
+function isSensitive(absolutePath: string): boolean {
+  const name = basename(absolutePath);
+  return !NOT_SENSITIVE.test(name) && SENSITIVE.some((p) => p.test(name));
+}
+
 export function checkPath(rawPath: string, projectRoot: string): PermDecision {
   const absolute = resolve(projectRoot, rawPath);
+  if (isSensitive(absolute)) return "always-ask";
   const rel = relative(projectRoot, absolute);
   const insideRoot = !rel.startsWith("..");
   return insideRoot ? "allowed" : "always-ask";

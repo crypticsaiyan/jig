@@ -31,7 +31,7 @@ export const fileRead: Tool<
       .optional(),
   }),
 
-  getPermissionKey: () => undefined,
+  getPermissionKey: ({ path }) => ({ kind: "read", value: path }),
   execute: async ({ path, offset = 0, limit = DEFAULT_LIMIT }) => {
     try {
       const content = await readFile(path, "utf-8");

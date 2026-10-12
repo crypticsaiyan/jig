@@ -18,6 +18,7 @@ export function summarizeArgs(raw: string): string {
   }
 }
 
+// failed tool calls, denied calls, and bash commands with a non-zero exit code
 export function isToolError(result: string): boolean {
-  return /^(Error|Not allowed)/.test(result);
+  return /^(Error|Not allowed)/.test(result) || /"exitCode":[1-9]/.test(result);
 }

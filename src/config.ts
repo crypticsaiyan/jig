@@ -15,6 +15,7 @@ export const CONFIG: LoopConfig = {
 export const TOOLS = {
   maxOutputChars: 2000, // cap per string field of a tool result
   readFileDefaultLimit: 2000, // lines read_file returns when no limit is given
+  bashMaxBufferBytes: 10 * 1024 * 1024, // output larger than this fails the command
 };
 
 // project-local storage
