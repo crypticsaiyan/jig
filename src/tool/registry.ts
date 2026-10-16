@@ -7,7 +7,8 @@ import { fileRead } from "./tools/read_file";
 import { strReplace } from "./tools/str_replace";
 import { fileWrite } from "./tools/write_file";
 import { truncateStrings } from "./truncate_tool";
-import type { Registry, Tool, ToolContext } from "./types";
+import type { RunContext } from "../loop/types";
+import type { Registry, Tool } from "./types";
 import z from "zod";
 
 export const localTools: Tool<any, unknown>[] = [
@@ -18,7 +19,7 @@ export const localTools: Tool<any, unknown>[] = [
   loadSkill,
 ];
 
-export function createRegistry(tools: Tool[]): Registry {
+export function createRegistry(tools: Tool<any, unknown>[]): Registry {
   function generateToolsSpecs(): ToolSpec[] {
     return tools.map((tool) => ({
       name: tool.name,
@@ -37,7 +38,7 @@ export function createRegistry(tools: Tool[]): Registry {
   async function run(
     name: string,
     args: string,
-    ctx: ToolContext,
+    ctx: RunContext,
   ): Promise<string> {
     const tool = registry.get(name);
 
@@ -68,7 +69,7 @@ export function createRegistry(tools: Tool[]): Registry {
       return `Not allowed to run tool: ${name}, reason: ${allowedToRun.reason}`;
 
     try {
-      const run = await tool.execute(parsedArgs.data, ctx.signal);
+      const run = await tool.execute(parsedArgs.data, ctx);
       return JSON.stringify(truncateStrings(run, ctx.maxOutputChars));
     } catch (error) {
       const message = error instanceof Error ? error.message : error;

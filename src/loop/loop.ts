@@ -2,8 +2,7 @@ import { compact } from "../context/compact";
 import { prune } from "../context/prune";
 import type { AgentMessage } from "../provider";
 import { dispatchTool } from "./dispatch";
-import type { ToolContext } from "../tool/types";
-import type { LoopInput, LoopOutput, StopReason } from "./types";
+import type { LoopInput, LoopOutput, RunContext, StopReason } from "./types";
 
 function buildMsgView(
   summary: AgentMessage,
@@ -20,7 +19,7 @@ const INTERRUPT_NOTE: AgentMessage = {
 };
 
 export async function runLoop(input: LoopInput): Promise<LoopOutput> {
-  const ctx: ToolContext = input.ctx;
+  const ctx: RunContext = input.ctx;
   const cfg = input.config;
   const state = input.state;
 
@@ -99,6 +98,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
           previousSummarizedUpTo = summarizedUpTo;
 
           tokensUsed += compactionTokensUsed;
+          ctx.budget.used += compactionTokensUsed;
         }
       } catch (error) {
         if (ctx.signal.aborted) return finish("interrupted");
@@ -121,6 +121,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     }
 
     tokensUsed += completion.stats.totalTokens;
+    ctx.budget.used += completion.stats.totalTokens;
     lastPromptTokens = completion.stats.promptTokens;
 
     // console.log(messages);
@@ -158,7 +159,8 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     ) {
       return finish(finishReason);
     }
-    if (tokensUsed > input.config.maxTokens) {
+    // shared budget, so a sub-agent's spending counts toward this cap too
+    if (ctx.budget.used > ctx.budget.max) {
       return finish("max_tokens");
     }
     iterations++;

@@ -1,12 +1,12 @@
 // ToolCall[] => run() => ToolMessage[]
 
 import type { ToolCall, ToolMessage } from "../provider";
-import type { Registry, ToolContext } from "../tool/types";
-import type { LoopEvents } from "./types";
+import type { Registry } from "../tool/types";
+import type { LoopEvents, RunContext } from "./types";
 
 export async function dispatchTool(
   toolCalls: ToolCall[],
-  ctx: ToolContext,
+  ctx: RunContext,
   registry: Registry,
   events?: LoopEvents,
 ): Promise<ToolMessage[]> {

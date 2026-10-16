@@ -1,5 +1,6 @@
 import type { z, ZodRawShape } from "zod";
-import type { Asker, PermKey, PermSession } from "../permission/types";
+import type { RunContext } from "../loop/types";
+import type { PermKey } from "../permission/types";
 import type { ToolSpec } from "../provider";
 
 export type Tool<
@@ -14,18 +15,11 @@ export type Tool<
   ) => PermKey | undefined;
   execute: (
     args: z.infer<z.ZodObject<TParams>>,
-    signal: AbortSignal,
+    ctx: RunContext,
   ) => Promise<TResult>;
-};
-
-export type ToolContext = {
-  permissions: PermSession;
-  asker: Asker;
-  signal: AbortSignal;
-  maxOutputChars: number;
 };
 
 export type Registry = {
   specs: ToolSpec[];
-  run: (name: string, args: string, ctx: ToolContext) => Promise<string>;
+  run: (name: string, args: string, ctx: RunContext) => Promise<string>;
 };

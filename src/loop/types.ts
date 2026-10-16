@@ -4,7 +4,8 @@ import type {
   SystemMessage,
   ToolCall,
 } from "../provider/types";
-import type { Registry, ToolContext } from "../tool/types";
+import type { Asker, PermSession } from "../permission/types";
+import type { Registry } from "../tool/types";
 
 // dependency injecting interfaces for loop
 
@@ -21,13 +22,28 @@ export interface LoopConfig {
   transcriptCapChars: number;
 }
 
+// tokens spent this turn; one object shared by the parent and its sub-agents
+export type TokenBudget = {
+  used: number;
+  max: number;
+};
+
+// per-turn runtime state, shared by the loop, its tools and sub-agent loops
+export type RunContext = {
+  permissions: PermSession;
+  asker: Asker;
+  signal: AbortSignal;
+  maxOutputChars: number;
+  budget: TokenBudget;
+};
+
 // loop input format
 export interface LoopInput {
   messages: AgentMessage[]; // new user query
   systemPrompt: SystemMessage; // built at runtime, kept out of config and state
   complete: CompleteStreamFunc;
   config: LoopConfig;
-  ctx: ToolContext;
+  ctx: RunContext;
   events?: LoopEvents;
   state?: LoopState | undefined;
   tools: Registry;

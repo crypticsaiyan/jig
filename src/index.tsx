@@ -5,6 +5,8 @@ import { createSession, loadLatestSession } from "./session/store";
 import { getContextWindow } from "./provider/model";
 import { CONFIG } from "./config";
 import { localTools, createRegistry } from "./tool";
+import { createSubagentTool } from "./agent/subagent";
+import { completeStream } from "./provider";
 
 const config = {
   ...CONFIG,
@@ -24,7 +26,17 @@ if (resume && !loaded) {
 
 const session = loaded ?? createSession("");
 
-const tools = createRegistry(localTools);
+const childTools = createRegistry(localTools);
+
+const tools = createRegistry([
+  ...localTools,
+  createSubagentTool({
+    complete: completeStream,
+    config,
+    tools: childTools,
+    systemPrompt,
+  }),
+]);
 
 render(
   <App

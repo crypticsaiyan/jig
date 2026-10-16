@@ -24,10 +24,10 @@ export const bashTool: Tool<
     command: z.string().describe("single non-interactive shell command to run"),
   }),
   getPermissionKey: ({ command }) => ({ kind: "command", value: command }),
-  execute: async ({ command }, signal) => {
+  execute: async ({ command }, ctx) => {
     try {
       const { stdout, stderr } = await execAsync(command, {
-        signal,
+        signal: ctx.signal,
         maxBuffer: TOOLS.bashMaxBufferBytes,
       });
       return { stdout, stderr, exitCode: 0 };

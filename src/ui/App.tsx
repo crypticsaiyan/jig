@@ -123,6 +123,7 @@ export function App({ systemPrompt, session, config, tools }: Props) {
           signal: controller.signal,
           maxOutputChars: TOOLS.maxOutputChars,
           permissions,
+          budget: { used: 0, max: config.maxTokens }, // fresh each turn
         },
         events: {
           onText: (c) => {
