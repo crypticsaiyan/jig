@@ -4,6 +4,7 @@ import { generateSystemPrompt } from "./context/system_prompt";
 import { createSession, loadLatestSession } from "./session/store";
 import { getContextWindow } from "./provider/model";
 import { CONFIG } from "./config";
+import { localTools, createRegistry } from "./tool";
 
 const config = {
   ...CONFIG,
@@ -23,6 +24,16 @@ if (resume && !loaded) {
 
 const session = loaded ?? createSession("");
 
-render(<App systemPrompt={systemPrompt} session={session} config={config} />, {
-  exitOnCtrlC: false,
-});
+const tools = createRegistry(localTools);
+
+render(
+  <App
+    systemPrompt={systemPrompt}
+    session={session}
+    config={config}
+    tools={tools}
+  />,
+  {
+    exitOnCtrlC: false,
+  },
+);

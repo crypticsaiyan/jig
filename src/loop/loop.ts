@@ -1,7 +1,6 @@
 import { compact } from "../context/compact";
 import { prune } from "../context/prune";
 import type { AgentMessage } from "../provider";
-import { generateToolsArray } from "../tool";
 import { dispatchTool } from "./dispatch";
 import type { ToolContext } from "../tool/types";
 import type { LoopInput, LoopOutput, StopReason } from "./types";
@@ -111,7 +110,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     try {
       completion = await input.complete(
         [input.systemPrompt, ...lastMessageView],
-        generateToolsArray(),
+        input.tools.specs,
         ctx.signal,
         input.config.loopModel,
         input.events,
@@ -140,6 +139,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         const toolCallResults = await dispatchTool(
           completion.message.toolCalls,
           ctx,
+          input.tools,
           input.events,
         );
         for (const result of toolCallResults) {

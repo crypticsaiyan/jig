@@ -1,13 +1,13 @@
-// ToolCall[] => runTool() => ToolMessage[]
+// ToolCall[] => run() => ToolMessage[]
 
 import type { ToolCall, ToolMessage } from "../provider";
-import { runTool } from "../tool";
-import type { ToolContext } from "../tool/types";
+import type { Registry, ToolContext } from "../tool/types";
 import type { LoopEvents } from "./types";
 
 export async function dispatchTool(
   toolCalls: ToolCall[],
   ctx: ToolContext,
+  registry: Registry,
   events?: LoopEvents,
 ): Promise<ToolMessage[]> {
   const toolResponse: Array<ToolMessage> = [];
@@ -21,7 +21,7 @@ export async function dispatchTool(
       continue;
     }
     if (events?.onToolStart) events.onToolStart(toolCall);
-    const content = await runTool(toolCall.name, toolCall.arguments, ctx);
+    const content = await registry.run(toolCall.name, toolCall.arguments, ctx);
     toolResponse.push({
       type: "tool",
       toolCallId: toolCall.toolCallId,

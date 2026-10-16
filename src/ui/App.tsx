@@ -18,6 +18,7 @@ import { messagesToItems } from "./history";
 import { TOOLS, UI } from "../config";
 import type { LoopConfig } from "../loop/types";
 import { StatusBar } from "./StatusBar";
+import type { Registry } from "../tool/types";
 
 const permissions: PermSession = {
   allowList: [],
@@ -28,12 +29,13 @@ type Props = {
   systemPrompt: SystemMessage;
   session: Session;
   config: LoopConfig;
+  tools: Registry;
 };
 type LiveTool = { name: string; summary: string };
 
 let nextId = 1;
 
-export function App({ systemPrompt, session, config }: Props) {
+export function App({ systemPrompt, session, config, tools }: Props) {
   const { exit } = useApp();
   const { stdout } = useStdout();
   const [resizeKey, setResizeKey] = useState(0); // new key remounts <Static>, reprinting every item
@@ -115,6 +117,7 @@ export function App({ systemPrompt, session, config }: Props) {
         complete: completeStream,
         systemPrompt,
         config,
+        tools,
         ctx: {
           asker,
           signal: controller.signal,

@@ -1,5 +1,6 @@
 import type { z, ZodRawShape } from "zod";
 import type { Asker, PermKey, PermSession } from "../permission/types";
+import type { ToolSpec } from "../provider";
 
 export type Tool<
   TParams extends ZodRawShape = ZodRawShape,
@@ -22,4 +23,9 @@ export type ToolContext = {
   asker: Asker;
   signal: AbortSignal;
   maxOutputChars: number;
+};
+
+export type Registry = {
+  specs: ToolSpec[];
+  run: (name: string, args: string, ctx: ToolContext) => Promise<string>;
 };

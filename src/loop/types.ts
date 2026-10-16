@@ -4,7 +4,7 @@ import type {
   SystemMessage,
   ToolCall,
 } from "../provider/types";
-import type { ToolContext } from "../tool/types";
+import type { Registry, ToolContext } from "../tool/types";
 
 // dependency injecting interfaces for loop
 
@@ -30,6 +30,7 @@ export interface LoopInput {
   ctx: ToolContext;
   events?: LoopEvents;
   state?: LoopState | undefined;
+  tools: Registry;
 }
 
 export type StopReason =

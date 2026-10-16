@@ -1,1 +1,1 @@
-export { generateToolsArray, runTool } from "./registry";
+export { localTools, createRegistry } from "./registry";
