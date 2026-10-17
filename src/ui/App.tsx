@@ -46,7 +46,7 @@ export function App({ systemPrompt, session, config, tools }: Props) {
   const [input, setInput] = useState("");
   const [liveText, setLiveText] = useState("");
   const [liveReasoning, setLiveReasoning] = useState("");
-  const [liveTool, setLiveTool] = useState<LiveTool | null>(null);
+  const [liveTools, setLiveTools] = useState<LiveTool[]>([]); // running tools, index = depth
   const [running, setRunning] = useState(false);
 
   // finished items are printed once at the current width; after a resize, clear and reprint them
@@ -76,9 +76,15 @@ export function App({ systemPrompt, session, config, tools }: Props) {
     setItems((prev) => [...prev, { id, kind, text }]);
   }
 
-  function pushTool(name: string, summary: string, ok: boolean) {
-    const id = nextId++;
-    setItems((prev) => [...prev, { id, kind: "tool", name, summary, ok }]);
+  const pendingChildren = useRef<Item[]>([]); // child lines wait for their parent's line
+
+  function pushTool(name: string, summary: string, ok: boolean, depth: number) {
+    const item: Item = { id: nextId++, kind: "tool", name, summary, ok, depth };
+    if (depth > 0) {
+      pendingChildren.current.push(item);
+      return;
+    }
+    setItems((prev) => [...prev, item, ...pendingChildren.current.splice(0)]);
   }
 
   function flushText() {
@@ -124,29 +130,34 @@ export function App({ systemPrompt, session, config, tools }: Props) {
           maxOutputChars: TOOLS.maxOutputChars,
           permissions,
           budget: { used: 0, max: config.maxTokens }, // fresh each turn
-        },
-        events: {
-          onText: (c) => {
-            liveRef.current += c;
-            setLiveText(liveRef.current);
+          events: {
+            onText: (c) => {
+              liveRef.current += c;
+              setLiveText(liveRef.current);
+            },
+            onReasoning: (c) => setLiveReasoning((p) => p + c),
+            onToolStart: (call, depth) => {
+              if (depth === 0) {
+                flushText();
+                setLiveReasoning("");
+              }
+              const tool = {
+                name: call.name,
+                summary: summarizeArgs(call.arguments),
+              };
+              setLiveTools((prev) => [...prev.slice(0, depth), tool]);
+            },
+            onToolResult: (call, result, depth) => {
+              setLiveTools((prev) => prev.slice(0, depth));
+              pushTool(
+                call.name,
+                summarizeArgs(call.arguments),
+                !isToolError(result),
+                depth,
+              );
+            },
           },
-          onReasoning: (c) => setLiveReasoning((p) => p + c),
-          onToolStart: (call) => {
-            flushText();
-            setLiveReasoning("");
-            setLiveTool({
-              name: call.name,
-              summary: summarizeArgs(call.arguments),
-            });
-          },
-          onToolResult: (call, result) => {
-            setLiveTool(null);
-            pushTool(
-              call.name,
-              summarizeArgs(call.arguments),
-              !isToolError(result),
-            );
-          },
+          depth: 0,
         },
       });
 
@@ -172,7 +183,8 @@ export function App({ systemPrompt, session, config, tools }: Props) {
     } finally {
       setLiveText("");
       setLiveReasoning("");
-      setLiveTool(null);
+      setLiveTools([]);
+      pendingChildren.current = []; // drop lines left by an interrupted sub-agent
       setRunning(false);
       abortRef.current = null;
     }
@@ -241,12 +253,12 @@ export function App({ systemPrompt, session, config, tools }: Props) {
             <Text dimColor>{liveReasoning.slice(-UI.reasoningTailChars)}</Text>
           ) : null}
           {liveText ? <Text>{liveText}</Text> : null}
-          {liveTool ? (
-            <Text dimColor>
-              {"  "}running {liveTool.name} {liveTool.summary}...
+          {liveTools.map((tool, depth) => (
+            <Text key={depth} dimColor>
+              {"  ".repeat(depth + 1)}running {tool.name} {tool.summary}...
             </Text>
-          ) : null}
-          {!liveText && !liveReasoning && !liveTool ? (
+          ))}
+          {!liveText && !liveReasoning && liveTools.length === 0 ? (
             <Text dimColor>thinking... (ctrl-c to stop)</Text>
           ) : null}
         </Box>

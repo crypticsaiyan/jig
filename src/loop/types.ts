@@ -35,6 +35,8 @@ export type RunContext = {
   signal: AbortSignal;
   maxOutputChars: number;
   budget: TokenBudget;
+  depth: number;
+  events?: LoopEvents;
 };
 
 // loop input format
@@ -44,7 +46,6 @@ export interface LoopInput {
   complete: CompleteStreamFunc;
   config: LoopConfig;
   ctx: RunContext;
-  events?: LoopEvents;
   state?: LoopState | undefined;
   tools: Registry;
 }
@@ -72,8 +73,8 @@ export interface LoopOutput {
 export interface LoopEvents {
   onText?: (chunk: string) => void;
   onReasoning?: (chunk: string) => void;
-  onToolStart?: (call: ToolCall) => void;
-  onToolResult?: (call: ToolCall, result: string) => void;
+  onToolStart?: (call: ToolCall, depth: number) => void;
+  onToolResult?: (call: ToolCall, result: string, depth: number) => void;
 }
 
 export interface LoopState {

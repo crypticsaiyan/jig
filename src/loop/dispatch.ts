@@ -2,13 +2,12 @@
 
 import type { ToolCall, ToolMessage } from "../provider";
 import type { Registry } from "../tool/types";
-import type { LoopEvents, RunContext } from "./types";
+import type { RunContext } from "./types";
 
 export async function dispatchTool(
   toolCalls: ToolCall[],
   ctx: RunContext,
   registry: Registry,
-  events?: LoopEvents,
 ): Promise<ToolMessage[]> {
   const toolResponse: Array<ToolMessage> = [];
   for (const toolCall of toolCalls) {
@@ -20,14 +19,15 @@ export async function dispatchTool(
       });
       continue;
     }
-    if (events?.onToolStart) events.onToolStart(toolCall);
+    const events = ctx.events;
+    if (events?.onToolStart) events.onToolStart(toolCall, ctx.depth);
     const content = await registry.run(toolCall.name, toolCall.arguments, ctx);
     toolResponse.push({
       type: "tool",
       toolCallId: toolCall.toolCallId,
       content,
     });
-    if (events?.onToolResult) events.onToolResult(toolCall, content);
+    if (events?.onToolResult) events.onToolResult(toolCall, content, ctx.depth);
   }
   return toolResponse;
 }

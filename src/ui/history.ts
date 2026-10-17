@@ -28,6 +28,7 @@ export function messagesToItems(
           name: call.name,
           summary: summarizeArgs(call.arguments),
           ok: result !== undefined && !isToolError(result),
+          depth: 0,
         });
       }
     }

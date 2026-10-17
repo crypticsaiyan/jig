@@ -42,7 +42,16 @@ export function createSubagentTool(
         complete: deps.complete,
         config: deps.config,
         tools: deps.tools,
-        ctx,
+        ctx: {
+          ...ctx,
+          depth: ctx.depth + 1,
+          events: {
+            onToolStart: (call, depth) =>
+              ctx.events?.onToolStart?.(call, depth),
+            onToolResult: (call, result, depth) =>
+              ctx.events?.onToolResult?.(call, result, depth),
+          },
+        },
       });
       const last = out.messages.findLast(
         (message) => message.type === "assistant" && Boolean(message.content),

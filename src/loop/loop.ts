@@ -113,7 +113,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
         input.tools.specs,
         ctx.signal,
         input.config.loopModel,
-        input.events,
+        ctx.events,
       );
     } catch (error) {
       if (ctx.signal.aborted) return finish("interrupted");
@@ -141,7 +141,6 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
           completion.message.toolCalls,
           ctx,
           input.tools,
-          input.events,
         );
         for (const result of toolCallResults) {
           messages.push(result);

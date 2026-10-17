@@ -52,7 +52,7 @@ export function ItemView({ item }: { item: Item }) {
       return (
         <Box>
           <Text dimColor>
-            {"  "}
+            {"  ".repeat(item.depth + 1)}
             {item.name} {item.summary}{" "}
           </Text>
           <Text color={item.ok ? "green" : "red"}>
