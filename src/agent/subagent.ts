@@ -4,6 +4,7 @@ import type { LoopConfig, StopReason } from "../loop/types";
 import type { SystemMessage } from "../provider";
 import type { CompleteStreamFunc } from "../provider/types";
 import type { Registry, Tool } from "../tool/types";
+import { lastAssistantText } from "../util";
 
 export type SubagentDeps = {
   complete: CompleteStreamFunc;
@@ -53,11 +54,9 @@ export function createSubagentTool(
           },
         },
       });
-      const last = out.messages.findLast(
-        (message) => message.type === "assistant" && Boolean(message.content),
-      );
+      const last = lastAssistantText(out.messages);
       return {
-        report: last?.content ?? "sub-agent returned no report",
+        report: last ?? "sub-agent returned no report",
         stopReason: out.stopReason,
       };
     },

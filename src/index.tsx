@@ -7,6 +7,7 @@ import { CONFIG } from "./config";
 import { localTools, createRegistry } from "./tool";
 import { createSubagentTool } from "./agent/subagent";
 import { completeStream } from "./provider";
+import { runHeadless } from "./headless";
 
 const config = {
   ...CONFIG,
@@ -15,13 +16,19 @@ const config = {
 
 const systemPrompt = await generateSystemPrompt();
 
-const resume = process.argv.includes("--continue");
+const argv = process.argv;
+
+const allowAll = argv.includes("--allow-all");
+const pIndex = argv.indexOf("-p"); // headless mode
+const prompt = pIndex === -1 ? undefined : argv[pIndex + 1]; // jig -p "prompt"
+
+const resume = argv.includes("--continue") || argv.includes("-c");
 const loaded = resume ? await loadLatestSession() : undefined;
 
 if (resume && !loaded) {
-  console.log("no saved session found, starting fresh session");
+  console.error("no saved session found, starting fresh session");
 } else if (resume && loaded) {
-  console.log(`resuming session: ${loaded.id}`);
+  console.error(`resuming session: ${loaded.id}`);
 }
 
 const session = loaded ?? createSession("");
@@ -37,6 +44,21 @@ const tools = createRegistry([
     systemPrompt,
   }),
 ]);
+
+if (pIndex !== -1) {
+  if (prompt === undefined) {
+    console.error("-p needs a prompt");
+    process.exit(1);
+  }
+  process.exit(
+    await runHeadless({
+      prompt,
+      session,
+      deps: { systemPrompt, config, tools },
+      allowAll,
+    }),
+  );
+}
 
 render(
   <App

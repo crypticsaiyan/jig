@@ -3,7 +3,7 @@
 import dotenv from "dotenv";
 import { OpenRouter } from "@openrouter/sdk";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 

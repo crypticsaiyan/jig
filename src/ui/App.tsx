@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Box, Static, Text, useApp, useInput, useStdout } from "ink";
 import type { Item } from "./types";
 import type { SystemMessage } from "../provider";
-import { completeStream } from "../provider";
-import { runLoop } from "../loop/loop";
 import { isToolError, summarizeArgs } from "./summarize";
 import { ItemView } from "./ItemView";
 import {
@@ -12,13 +10,13 @@ import {
   type AskRequest,
 } from "./PermissionPrompt";
 import type { UserDecision, Asker, PermSession } from "../permission/types";
-import { saveSession } from "../session/store";
 import type { Session } from "../session";
 import { messagesToItems } from "./history";
-import { TOOLS, UI } from "../config";
+import { UI } from "../config";
 import type { LoopConfig } from "../loop/types";
 import { StatusBar } from "./StatusBar";
 import type { Registry } from "../tool/types";
+import { runTurn } from "../loop/turn";
 
 const permissions: PermSession = {
   allowList: [],
@@ -106,7 +104,7 @@ export function App({ systemPrompt, session, config, tools }: Props) {
   }
 
   async function submit(text: string) {
-    // submits the user query to runLoop
+    // submits the user query to runTurn
     const controller = new AbortController();
     abortRef.current = controller;
     push("user", text);
@@ -117,19 +115,13 @@ export function App({ systemPrompt, session, config, tools }: Props) {
     setRunning(true);
 
     try {
-      const result = await runLoop({
-        messages: [{ type: "user", content: text }],
-        state: sessionRef.current.state,
-        complete: completeStream,
-        systemPrompt,
-        config,
-        tools,
-        ctx: {
+      const { result, saveError } = await runTurn(
+        text,
+        sessionRef.current,
+        { systemPrompt, config, tools, permissions },
+        {
           asker,
           signal: controller.signal,
-          maxOutputChars: TOOLS.maxOutputChars,
-          permissions,
-          budget: { used: 0, max: config.maxTokens }, // fresh each turn
           events: {
             onText: (c) => {
               liveRef.current += c;
@@ -157,21 +149,9 @@ export function App({ systemPrompt, session, config, tools }: Props) {
               );
             },
           },
-          depth: 0,
         },
-      });
-
-      sessionRef.current.state = result.state;
-      sessionRef.current.updatedAt = Date.now().toString();
-      if (sessionRef.current.title === "") {
-        sessionRef.current.title = text.slice(0, UI.titleMaxChars);
-      }
-
-      try {
-        await saveSession(sessionRef.current);
-      } catch (error) {
-        push("error", "cant save session: " + error);
-      }
+      );
+      if (saveError) push("error", "cant save session: " + saveError);
 
       flushText(); // final answer
 
