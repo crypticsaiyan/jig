@@ -19,6 +19,7 @@ const systemPrompt = await generateSystemPrompt();
 const argv = process.argv;
 
 const allowAll = argv.includes("--allow-all");
+const json = argv.includes("--json"); // one JSON object on stdout, for scripts
 const pIndex = argv.indexOf("-p"); // headless mode
 const prompt = pIndex === -1 ? undefined : argv[pIndex + 1]; // jig -p "prompt"
 
@@ -56,6 +57,7 @@ if (pIndex !== -1) {
       session,
       deps: { systemPrompt, config, tools },
       allowAll,
+      json,
     }),
   );
 }
