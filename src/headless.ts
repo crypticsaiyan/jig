@@ -6,7 +6,7 @@ import { lastAssistantText } from "./util";
 export type HeadlessOptions = {
   prompt: string;
   session: Session;
-  deps: Omit<TurnDeps, "permissions">; // headless gets its own fresh permissions
+  deps: TurnDeps;
   allowAll: boolean; // auto-approve "ask" prompts
   json: boolean; // one JSON object on stdout instead of streamed text
 };
@@ -28,7 +28,7 @@ export async function runHeadless(opts: HeadlessOptions): Promise<number> {
     const { result, budgetUsed, saveError } = await runTurn(
       prompt,
       session,
-      { ...deps, permissions: { allowList: [], projectRoot: process.cwd() } },
+      deps,
       {
         // no one to ask: deny by default, never auto-approve always-ask
         asker: async (_key, decision) =>

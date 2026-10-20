@@ -32,3 +32,29 @@ export const UI = {
   toolSummaryChars: 60, // tool line argument summary
   resizeDebounceMs: 100, // wait for the resize to settle before reprinting
 };
+
+// bash sandbox (bubblewrap)
+export const SANDBOX = {
+  // hidden inside the sandbox (relative to the home folder)
+  maskedHome: [
+    ".ssh",
+    ".aws",
+    ".gnupg",
+    ".docker",
+    ".config/gh",
+    ".netrc",
+    ".npmrc",
+  ],
+  // env vars passed into the sandbox
+  keepEnv: [
+    "PATH",
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "SHELL",
+    "TERM",
+    "LANG",
+    "LC_ALL",
+    "TZ",
+  ],
+};

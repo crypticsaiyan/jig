@@ -8,6 +8,7 @@ export type PermDecision = "allowed" | "ask" | "always-ask";
 export type PermSession = {
   allowList: RegExp[];
   projectRoot: string;
+  sandbox: boolean; // bwrap works here, so bash runs sandboxed
 };
 
 export type Allowed = { ok: true } | { ok: false; reason: string };

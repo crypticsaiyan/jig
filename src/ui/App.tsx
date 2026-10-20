@@ -18,22 +18,24 @@ import { StatusBar } from "./StatusBar";
 import type { Registry } from "../tool/types";
 import { runTurn } from "../loop/turn";
 
-const permissions: PermSession = {
-  allowList: [],
-  projectRoot: process.cwd(),
-};
-
 type Props = {
   systemPrompt: SystemMessage;
   session: Session;
   config: LoopConfig;
   tools: Registry;
+  permissions: PermSession; // allowList grows as the user picks "allow always"
 };
 type LiveTool = { name: string; summary: string };
 
 let nextId = 1;
 
-export function App({ systemPrompt, session, config, tools }: Props) {
+export function App({
+  systemPrompt,
+  session,
+  config,
+  tools,
+  permissions,
+}: Props) {
   const { exit } = useApp();
   const { stdout } = useStdout();
   const [resizeKey, setResizeKey] = useState(0); // new key remounts <Static>, reprinting every item

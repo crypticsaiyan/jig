@@ -37,7 +37,7 @@ const SENSITIVE: RegExp[] = [
 ];
 const NOT_SENSITIVE = /^\.env\.(example|sample|template)$/i;
 
-function isSensitive(absolutePath: string): boolean {
+export function isSensitive(absolutePath: string): boolean {
   const name = basename(absolutePath);
   return !NOT_SENSITIVE.test(name) && SENSITIVE.some((p) => p.test(name));
 }

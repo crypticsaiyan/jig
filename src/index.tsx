@@ -8,6 +8,8 @@ import { localTools, createRegistry } from "./tool";
 import { createSubagentTool } from "./agent/subagent";
 import { completeStream } from "./provider";
 import { runHeadless } from "./headless";
+import type { PermSession } from "./permission/types";
+import { sandboxAvailable } from "./sandbox/bwrap";
 
 const config = {
   ...CONFIG,
@@ -34,6 +36,20 @@ if (resume && !loaded) {
 
 const session = loaded ?? createSession("");
 
+const sandbox = await sandboxAvailable();
+if (!sandbox) {
+  console.error(
+    "sandbox off: bwrap missing or blocked, so commands with pipes or redirects will ask.\n" +
+      "  install: sudo pacman -S bubblewrap | sudo apt install bubblewrap | sudo dnf install bubblewrap",
+  );
+}
+// fresh per process; the UI's allowList grows during the session
+const permissions: PermSession = {
+  allowList: [],
+  projectRoot: process.cwd(),
+  sandbox,
+};
+
 const childTools = createRegistry(localTools);
 
 const tools = createRegistry([
@@ -55,7 +71,7 @@ if (pIndex !== -1) {
     await runHeadless({
       prompt,
       session,
-      deps: { systemPrompt, config, tools },
+      deps: { systemPrompt, config, tools, permissions },
       allowAll,
       json,
     }),
@@ -68,6 +84,7 @@ render(
     session={session}
     config={config}
     tools={tools}
+    permissions={permissions}
   />,
   {
     exitOnCtrlC: false,

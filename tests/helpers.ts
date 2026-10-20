@@ -154,7 +154,7 @@ export function makeCtx(overrides: Partial<RunContext> = {}): RunContext {
     asker: async () => "allow-once",
     signal: new AbortController().signal,
     maxOutputChars: 2000,
-    permissions: { allowList: [], projectRoot: process.cwd() },
+    permissions: { allowList: [], projectRoot: process.cwd(), sandbox: false },
     budget: { used: 0, max: testConfig.maxTokens },
     depth: 0,
     ...overrides,
