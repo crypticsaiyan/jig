@@ -10,7 +10,8 @@ export type AskRequest = {
 type Option = { label: string; value: UserDecision };
 
 const LABELS: Record<PermKey["kind"], string> = {
-  command: "run: ",
+  command: "run outside sandbox: ",
+  sandboxed: "run: ",
   path: "write: ",
   read: "read: ",
   edit: "edit: ",

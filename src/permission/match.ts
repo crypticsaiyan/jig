@@ -22,6 +22,13 @@ function matchesAllowed(command: string, rules: RegExp[]): boolean {
   return rules.some((pattern) => pattern.test(command));
 }
 
+// inside the sandbox only destructive commands ask; the OS blocks the rest
+export function checkSandboxed(command: string): PermDecision {
+  return ALWAYS_ASK.some((pattern) => pattern.test(command))
+    ? "always-ask"
+    : "allowed";
+}
+
 export function checkCommand(command: string, rules: RegExp[]): PermDecision {
   if (!isSafe(command)) return "always-ask";
   if (matchesAllowed(command, rules)) return "allowed";

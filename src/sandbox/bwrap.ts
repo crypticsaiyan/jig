@@ -17,12 +17,19 @@ function mask(path: string): string[] {
 
 export function sandboxArgs(command: string, projectRoot: string): string[] {
   const home = homedir();
+
   const secretsInHome = SANDBOX.maskedHome
     .map((p) => join(home, p))
     .filter((p) => existsSync(p));
+
   const secretsInProject = readdirSync(projectRoot)
     .map((name) => join(projectRoot, name))
     .filter((p) => isSensitive(p));
+
+  const protectedPaths = SANDBOX.protectedInProject
+    .map((p) => join(projectRoot, p))
+    .filter((p) => existsSync(p));
+
   const keptEnv = SANDBOX.keepEnv.flatMap((name) => {
     const value = process.env[name];
     return value === undefined ? [] : [["--setenv", name, value]];
@@ -34,6 +41,7 @@ export function sandboxArgs(command: string, projectRoot: string): string[] {
     ["--proc", "/proc"],
     ["--tmpfs", "/tmp"], // private, writable, thrown away after
     ["--bind", projectRoot, projectRoot], // project writable
+    ...protectedPaths.map((p) => ["--ro-bind", p, p]),
     ...[...secretsInHome, ...secretsInProject].map(mask),
     ["--unshare-net"], // no network
     ["--unshare-pid"],

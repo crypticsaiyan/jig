@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import type { Tool } from "../tool/types";
-import { checkCommand, checkEdit, checkPath } from "./match";
+import { checkCommand, checkEdit, checkPath, checkSandboxed } from "./match";
 import type {
   Allowed,
   Asker,
@@ -31,6 +31,12 @@ export async function checkPermission(
   switch (key.kind) {
     case "command":
       decision = checkCommand(key.value, permissions.allowList);
+      break;
+    case "sandboxed":
+      // no working sandbox: the command runs normally, so check it like one
+      decision = permissions.sandbox
+        ? checkSandboxed(key.value)
+        : checkCommand(key.value, permissions.allowList);
       break;
     case "path":
     case "read":
