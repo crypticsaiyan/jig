@@ -25,7 +25,7 @@ beforeAll(() => {
 });
 
 function session(sandbox: boolean, allowList: RegExp[] = []): PermSession {
-  return { allowList, projectRoot: root, sandbox };
+  return { allowList, projectRoot: root, sandbox, network: false };
 }
 
 // file keys arrive absolute, as checkPermission builds them

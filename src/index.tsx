@@ -3,13 +3,14 @@ import { App } from "./ui/App";
 import { generateSystemPrompt } from "./context/system_prompt";
 import { createSession, loadLatestSession } from "./session/store";
 import { getContextWindow } from "./provider/model";
-import { CONFIG } from "./config";
+import { CONFIG, SANDBOX } from "./config";
 import { localTools, createRegistry } from "./tool";
 import { createSubagentTool } from "./agent/subagent";
 import { completeStream } from "./provider";
 import { runHeadless } from "./headless";
 import type { PermSession } from "./permission/types";
-import { sandboxAvailable } from "./sandbox/bwrap";
+import { sandboxAvailable, socatAvailable } from "./sandbox/bwrap";
+import { startProxy } from "./sandbox/proxy";
 
 const config = {
   ...CONFIG,
@@ -43,11 +44,37 @@ if (!sandbox) {
       "  install: sudo pacman -S bubblewrap | sudo apt install bubblewrap | sudo dnf install bubblewrap",
   );
 }
-// fresh per process; the UI's allowList grows during the session
+
+// sandboxed commands reach allowed domains through the proxy
+async function startNetwork(): Promise<boolean> {
+  if (!sandbox) return false;
+  if (!(await socatAvailable())) {
+    console.error(
+      "sandbox network off: socat not found, so sandboxed commands have no internet.\n" +
+        "  install: sudo pacman -S socat | sudo apt install socat | sudo dnf install socat",
+    );
+    return false;
+  }
+  try {
+    const stopProxy = await startProxy(
+      SANDBOX.proxySocket,
+      SANDBOX.allowedDomains,
+    );
+    process.on("exit", stopProxy);
+    return true;
+  } catch (error) {
+    console.error(`sandbox network off: proxy failed to start: ${error}`);
+    return false;
+  }
+}
+const network = await startNetwork();
+
+// UI's allowList grows during the session
 const permissions: PermSession = {
   allowList: [],
   projectRoot: process.cwd(),
   sandbox,
+  network,
 };
 
 const childTools = createRegistry(localTools);

@@ -10,7 +10,8 @@ export type AskDecision = Exclude<PermDecision, "allowed">;
 export type PermSession = {
   allowList: RegExp[];
   projectRoot: string;
-  sandbox: boolean; // bwrap works here, so bash runs sandboxed
+  sandbox: boolean;
+  network: boolean;
 };
 
 export type Allowed = { ok: true } | { ok: false; reason: string };

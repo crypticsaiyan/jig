@@ -1,4 +1,6 @@
+import { tmpdir } from "node:os";
 import type { LoopConfig } from "./loop/types";
+import { join } from "node:path";
 
 export const CONFIG: LoopConfig = {
   maxIterations: 20,
@@ -7,7 +9,8 @@ export const CONFIG: LoopConfig = {
   maxPruneAllowanceRatio: 0.1,
   compactionRatio: 0.9,
   pruneRatio: 0.5,
-  loopModel: "anthropic/claude-haiku-5.5",
+  // loopModel: "anthropic/claude-haiku-5.5",
+  loopModel: "openrouter/free",
   compactionModel: "openrouter/free",
   transcriptCapChars: 2000,
 };
@@ -57,4 +60,7 @@ export const SANDBOX = {
     "LC_ALL",
     "TZ",
   ],
+  allowedDomains: ["registry.npmjs.org", "github.com", "githubusercontent.com"],
+  proxySocket: join(tmpdir(), `jig-proxy-${process.pid}.sock`),
+  proxyPort: 3111, // where tools in sandbox find the proxy
 };

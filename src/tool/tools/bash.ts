@@ -2,7 +2,7 @@ import type { Tool } from "../types";
 import { promisify } from "node:util";
 import { exec, execFile } from "node:child_process";
 import z from "zod";
-import { TOOLS } from "../../config";
+import { SANDBOX, TOOLS } from "../../config";
 import { sandboxArgs } from "../../sandbox/bwrap";
 
 const execAsync = promisify(exec);
@@ -20,8 +20,7 @@ export const bashTool: Tool<
   { stdout: string; stderr: string; exitCode: number }
 > = {
   name: "bash",
-  description:
-    "Run a shell command in the project directory. Returns stdout, stderr and exitCode; a failing command (non-zero exitCode) still returns its output, so read stderr to fix the problem. Use it for search (grep, find, ls), running tests, typecheck and other non-interactive commands. Output is truncated if long, so narrow the command (head, grep, wc). No interactive commands. Commands run in a sandbox when available: the project and /tmp are writable, the rest of the filesystem is read-only, secrets are hidden and there is no network. Pipes and chaining are fine inside it. Without the sandbox, pipes, chaining and redirects need user approval, so prefer simple commands. If a command needs network (installing packages, git fetch/push) or files outside the project, set unsandboxed: true; the user is asked first.",
+  description: `Run a shell command in the project directory. Returns stdout, stderr and exitCode; a failing command (non-zero exitCode) still returns its output, so read stderr to fix the problem. Use it for search (grep, find, ls), running tests, typecheck and other non-interactive commands. Output is truncated if long, so narrow the command (head, grep, wc). No interactive commands. Commands run in a sandbox when available: the project and /tmp are writable, the rest of the filesystem is read-only, secrets are hidden and the only network is HTTPS to ${SANDBOX.allowedDomains.join(", ")} (when available), enough for package installs and git clone over https. Pipes and chaining are fine inside it. Without the sandbox, pipes, chaining and redirects need user approval, so prefer simple commands. If a command needs other sites, git over ssh, git push, or files outside the project, set unsandboxed: true; the user is asked first.`,
   parameters: z.object({
     command: z.string().describe("single non-interactive shell command to run"),
     unsandboxed: z
@@ -45,7 +44,11 @@ export const bashTool: Tool<
         ctx.permissions.sandbox && !unsandboxed
           ? await execFileAsync(
               "bwrap",
-              sandboxArgs(command, ctx.permissions.projectRoot),
+              sandboxArgs(
+                command,
+                ctx.permissions.projectRoot,
+                ctx.permissions.network,
+              ),
               options,
             )
           : await execAsync(command, options);
