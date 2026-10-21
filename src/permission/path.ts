@@ -1,50 +1,10 @@
-import type { PermDecision } from "./types";
+// rules for file paths (read_file, write_file, str_replace)
+
 import { lstatSync, realpathSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
-import { SANDBOX } from "../config";
-
-const CHAINING = /&&|\|\||[;|`\n\r]|\$\(|>>|<<|[><]/;
-
-const ALWAYS_ASK: RegExp[] = [
-  /\brm\s+-[a-z]*r[a-z]*f\b/i, // rm -rf, rm -fr, etc.
-  /\bgit\s+push\s+.*(--force|-f)\b/,
-  /\bgit\s+reset\s+.*--hard\b/,
-  /\bgit\s+clean\s+.*-f/,
-  /\bgit\s+branch\s+-D\b/,
-];
-
-function isSafe(command: string): boolean {
-  return (
-    !CHAINING.test(command) &&
-    !ALWAYS_ASK.some((pattern) => pattern.test(command))
-  );
-}
-
-function matchesAllowed(command: string, rules: RegExp[]): boolean {
-  return rules.some((pattern) => pattern.test(command));
-}
-
-// inside the sandbox only destructive commands ask; the OS blocks the rest
-export function checkSandboxed(command: string): PermDecision {
-  return ALWAYS_ASK.some((pattern) => pattern.test(command))
-    ? "always-ask"
-    : "allowed";
-}
-
-export function checkCommand(command: string, rules: RegExp[]): PermDecision {
-  if (!isSafe(command)) return "always-ask";
-  if (matchesAllowed(command, rules)) return "allowed";
-  return "ask";
-}
-
-// files that usually hold secrets; they always ask, even inside the project
-const SENSITIVE: RegExp[] = [
-  /^\.env(\..+)?$/i, // .env, .env.local, .env.production
-  /\.(pem|key|p12|pfx)$/i, // certificates and private keys
-  /^id_(rsa|ecdsa|ed25519|dsa)$/, // ssh private keys
-  /^\.(npmrc|netrc|pgpass)$/, // tokens and passwords
-];
-const NOT_SENSITIVE = /^\.env\.(example|sample|template)$/i;
+import { matchesAny } from "./allowlist";
+import { NOT_SENSITIVE, PROTECTED, SENSITIVE } from "./policy";
+import type { PermDecision } from "./types";
 
 export function isSensitive(absolutePath: string): boolean {
   const name = basename(absolutePath);
@@ -77,11 +37,8 @@ function realTarget(absolute: string): string | undefined {
   }
 }
 
-// git hooks, git config, .jig: run or loaded later, outside the sandbox
 function isProtected(rel: string): boolean {
-  return SANDBOX.protectedInProject.some(
-    (p) => rel === p || rel.startsWith(p + sep),
-  );
+  return PROTECTED.some((p) => rel === p || rel.startsWith(p + sep));
 }
 
 // access "write" also guards protected paths; reading them is harmless
@@ -109,6 +66,6 @@ export function checkEdit(
 ): PermDecision {
   if (checkPath(absolutePath, projectRoot, "write") === "always-ask")
     return "always-ask";
-  if (matchesAllowed(absolutePath, rules)) return "allowed";
+  if (matchesAny(rules, absolutePath)) return "allowed";
   return "ask";
 }

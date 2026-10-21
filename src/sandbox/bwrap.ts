@@ -6,7 +6,8 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { SANDBOX } from "../config";
-import { isSensitive } from "../permission/match";
+import { isSensitive } from "../permission/path";
+import { PROTECTED } from "../permission/policy";
 
 // hide a path
 function mask(path: string): string[] {
@@ -26,9 +27,9 @@ export function sandboxArgs(command: string, projectRoot: string): string[] {
     .map((name) => join(projectRoot, name))
     .filter((p) => isSensitive(p));
 
-  const protectedPaths = SANDBOX.protectedInProject
-    .map((p) => join(projectRoot, p))
-    .filter((p) => existsSync(p));
+  const protectedPaths = PROTECTED.map((p) => join(projectRoot, p)).filter(
+    (p) => existsSync(p),
+  );
 
   const keptEnv = SANDBOX.keepEnv.flatMap((name) => {
     const value = process.env[name];

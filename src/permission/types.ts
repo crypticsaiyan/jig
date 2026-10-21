@@ -1,9 +1,11 @@
 export type PermKey = {
-  kind: "command" | "path" | "edit" | "read" | "sandboxed";
-  value: string;
+  // bash: sandboxed when possible; bash-unsandboxed: the model asked to skip the sandbox
+  kind: "bash" | "bash-unsandboxed" | "read" | "write" | "edit";
+  value: string; // the command, or the file path
 };
 
 export type PermDecision = "allowed" | "ask" | "always-ask";
+export type AskDecision = Exclude<PermDecision, "allowed">;
 
 export type PermSession = {
   allowList: RegExp[];
@@ -18,5 +20,5 @@ export type UserDecision =
 
 export type Asker = (
   key: PermKey,
-  decision: "ask" | "always-ask",
+  decision: AskDecision,
 ) => Promise<UserDecision>;

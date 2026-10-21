@@ -32,7 +32,7 @@ export const bashTool: Tool<
       ),
   }),
   getPermissionKey: ({ command, unsandboxed }) => ({
-    kind: unsandboxed ? "command" : "sandboxed",
+    kind: unsandboxed ? "bash-unsandboxed" : "bash",
     value: command,
   }),
   execute: async ({ command, unsandboxed }, ctx) => {

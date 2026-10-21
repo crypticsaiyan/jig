@@ -1,27 +1,24 @@
 import { Box, Text } from "ink";
-import type { PermKey, UserDecision } from "../permission/types";
+import type { AskDecision, PermKey, UserDecision } from "../permission/types";
 
 export type AskRequest = {
   key: PermKey;
-  decision: "ask" | "always-ask";
+  decision: AskDecision;
   resolve: (d: UserDecision) => void;
 };
 
 type Option = { label: string; value: UserDecision };
 
 const LABELS: Record<PermKey["kind"], string> = {
-  command: "run outside sandbox: ",
-  sandboxed: "run: ",
-  path: "write: ",
+  bash: "run: ",
+  "bash-unsandboxed": "run outside sandbox: ",
+  write: "write: ",
   read: "read: ",
   edit: "edit: ",
 };
 
 // always-ask actions are never saved to the allowlist, so only offer once or deny
-export function optionsFor(
-  key: PermKey,
-  decision: "ask" | "always-ask",
-): Option[] {
+export function optionsFor(key: PermKey, decision: AskDecision): Option[] {
   if (decision === "always-ask") {
     return [
       { label: "allow once", value: "allow-once" },

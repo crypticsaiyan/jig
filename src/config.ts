@@ -45,8 +45,6 @@ export const SANDBOX = {
     ".netrc",
     ".npmrc",
   ],
-  // read only inside project
-  protectedInProject: [".git/hooks", ".git/config", ".jig"],
   // env vars passed into the sandbox
   keepEnv: [
     "PATH",

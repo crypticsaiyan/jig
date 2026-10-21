@@ -176,6 +176,6 @@ export const guardedTool: Tool<{ command: z.ZodString }, string> = {
   name: "guarded",
   description: "needs permission",
   parameters: z.object({ command: z.string() }),
-  getPermissionKey: ({ command }) => ({ kind: "command", value: command }),
+  getPermissionKey: ({ command }) => ({ kind: "bash", value: command }),
   execute: async () => "ran",
 };
