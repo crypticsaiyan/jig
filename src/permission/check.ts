@@ -39,8 +39,10 @@ export async function checkPermission(
         : checkCommand(key.value, permissions.allowList);
       break;
     case "path":
+      decision = checkPath(key.value, permissions.projectRoot, "write");
+      break;
     case "read":
-      decision = checkPath(key.value, permissions.projectRoot);
+      decision = checkPath(key.value, permissions.projectRoot, "read");
       break;
     case "edit":
       decision = checkEdit(
