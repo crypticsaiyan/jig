@@ -24,12 +24,23 @@ export async function runHeadless(opts: HeadlessOptions): Promise<number> {
 
   const toolLog: { name: string; ok: boolean; depth: number }[] = [];
   const start = performance.now();
+  // stderr log with elapsed time, so a hang shows what jig was waiting on
+  const log = (depth: number, text: string) =>
+    console.error(
+      `[${((performance.now() - start) / 1000).toFixed(1)}s]${"  ".repeat(depth + 1)}${text}`,
+    );
+  const complete: typeof deps.complete = async (...args) => {
+    log(0, "model call...");
+    const response = await deps.complete(...args);
+    log(0, `model done (${response.stats.totalTokens} tokens)`);
+    return response;
+  };
 
   try {
     const { result, budgetUsed, saveError } = await runTurn(
       prompt,
       session,
-      deps,
+      { ...deps, complete },
       {
         // no one to ask: deny by default, never auto-approve always-ask
         asker: async (key, decision) =>
@@ -40,12 +51,12 @@ export async function runHeadless(opts: HeadlessOptions): Promise<number> {
         signal: controller.signal,
         events: {
           ...(json ? {} : { onText: (c: string) => process.stdout.write(c) }),
+          onToolStart: (call, depth) =>
+            log(depth, `${call.name} ${summarizeArgs(call.arguments)}...`),
           onToolResult: (call, result, depth) => {
             const ok = !isToolError(result);
             toolLog.push({ name: call.name, ok, depth });
-            console.error(
-              `${"  ".repeat(depth + 1)}${call.name} ${summarizeArgs(call.arguments)} ${ok ? "ok" : "error"}`,
-            );
+            log(depth, `${call.name} ${ok ? "ok" : "error"}`);
           },
         },
       },

@@ -7,4 +7,5 @@ export type {
   SystemMessage,
 } from "./types";
 
-export { complete, completeStream } from "./complete";
+export { completeStream } from "./complete";
+export { withRetry } from "./retry";

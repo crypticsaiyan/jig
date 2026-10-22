@@ -19,6 +19,13 @@ export const TOOLS = {
   maxOutputChars: 2000, // cap per string field of a tool result
   readFileDefaultLimit: 2000, // lines read_file returns when no limit is given
   bashMaxBufferBytes: 10 * 1024 * 1024, // output larger than this fails the command
+  bashTimeoutMs: 120_000, // commands still running after this are killed
+};
+
+// model calls
+export const PROVIDER = {
+  streamIdleTimeoutMs: 90_000, // no chunk for this long: the stream is stalled, abort it
+  retries: 2, // extra attempts after a stall, network error or 5xx
 };
 
 // project-local storage

@@ -56,14 +56,6 @@ export type ToolSpec = {
   parameters: object;
 };
 
-export type CompleteFunc = (
-  // generates the next completion
-  messages: AgentMessage[],
-  tools: ToolSpec[],
-  signal: AbortSignal,
-  model: string,
-) => Promise<ProviderResponse>;
-
 export type StreamCallbacks = {
   onText?: (chunk: string) => void;
   onReasoning?: (chunk: string) => void;

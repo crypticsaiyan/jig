@@ -1,5 +1,5 @@
 import type { SystemMessage } from "../provider";
-import { completeStream } from "../provider";
+import type { CompleteStreamFunc } from "../provider/types";
 import type { Asker, PermSession } from "../permission/types";
 import type { Session } from "../session";
 import { saveSession } from "../session/store";
@@ -10,6 +10,7 @@ import type { LoopConfig, LoopEvents, LoopOutput } from "./types";
 
 // built once at startup, same for every turn
 export type TurnDeps = {
+  complete: CompleteStreamFunc; // the model call, with stall timeout and retries
   systemPrompt: SystemMessage;
   config: LoopConfig;
   tools: Registry;
@@ -40,7 +41,7 @@ export async function runTurn(
   const result = await runLoop({
     messages: [{ type: "user", content: text }],
     state: session.state,
-    complete: completeStream,
+    complete: deps.complete,
     systemPrompt: deps.systemPrompt,
     config: deps.config,
     tools: deps.tools,

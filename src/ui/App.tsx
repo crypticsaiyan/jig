@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Box, Static, Text, useApp, useInput, useStdout } from "ink";
 import type { Item } from "./types";
 import type { SystemMessage } from "../provider";
+import type { CompleteStreamFunc } from "../provider/types";
 import { isToolError, summarizeArgs } from "./summarize";
 import { ItemView } from "./ItemView";
 import {
@@ -24,6 +25,7 @@ type Props = {
   config: LoopConfig;
   tools: Registry;
   permissions: PermSession; // allowList grows as the user picks "allow always"
+  complete: CompleteStreamFunc;
 };
 type LiveTool = { name: string; summary: string };
 
@@ -35,6 +37,7 @@ export function App({
   config,
   tools,
   permissions,
+  complete,
 }: Props) {
   const { exit } = useApp();
   const { stdout } = useStdout();
@@ -120,7 +123,7 @@ export function App({
       const { result, saveError } = await runTurn(
         text,
         sessionRef.current,
-        { systemPrompt, config, tools, permissions },
+        { complete, systemPrompt, config, tools, permissions },
         {
           asker,
           signal: controller.signal,

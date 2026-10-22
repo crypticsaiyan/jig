@@ -3,10 +3,10 @@ import { App } from "./ui/App";
 import { generateSystemPrompt } from "./context/system_prompt";
 import { createSession, loadLatestSession } from "./session/store";
 import { getContextWindow } from "./provider/model";
-import { CONFIG, SANDBOX } from "./config";
+import { CONFIG, PROVIDER, SANDBOX } from "./config";
 import { localTools, createRegistry } from "./tool";
 import { createSubagentTool } from "./agent/subagent";
-import { completeStream } from "./provider";
+import { completeStream, withRetry } from "./provider";
 import { runHeadless } from "./headless";
 import type { PermSession } from "./permission/types";
 import { sandboxAvailable, socatAvailable } from "./sandbox/bwrap";
@@ -80,10 +80,21 @@ const permissions: PermSession = {
 
 const childTools = createRegistry(localTools);
 
+// every model call (turns, sub-agents, compaction) retries stalls and network errors
+const complete = withRetry(
+  completeStream,
+  PROVIDER.retries,
+  // headless can print; in the UI stderr would garble the screen
+  pIndex === -1
+    ? undefined
+    : (attempt, error) =>
+        console.error(`  retrying model call (${attempt}): ${error}`),
+);
+
 const tools = createRegistry([
   ...localTools,
   createSubagentTool({
-    complete: completeStream,
+    complete,
     config,
     tools: childTools,
     systemPrompt,
@@ -99,7 +110,7 @@ if (pIndex !== -1) {
     await runHeadless({
       prompt,
       session,
-      deps: { systemPrompt, config, tools, permissions },
+      deps: { complete, systemPrompt, config, tools, permissions },
       allowAll,
       allowEdits,
       json,
@@ -114,6 +125,7 @@ render(
     config={config}
     tools={tools}
     permissions={permissions}
+    complete={complete}
   />,
   {
     exitOnCtrlC: false,
