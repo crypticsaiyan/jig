@@ -40,11 +40,11 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
 
   const messages: Array<AgentMessage> = [
     ...(state?.messages ?? []),
-    ...input.messages,
+    input.userMessage,
   ];
   let lastMessageView: AgentMessage[] = [
     ...(state?.view ?? []),
-    ...input.messages,
+    input.userMessage,
   ];
   let previousSummary: AgentMessage = state
     ? state.summary

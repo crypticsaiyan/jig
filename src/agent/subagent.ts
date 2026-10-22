@@ -38,7 +38,7 @@ export function createSubagentTool(
     getPermissionKey: () => undefined, // the child's own tool calls still ask
     execute: async ({ prompt }, ctx) => {
       const out = await runLoop({
-        messages: [{ type: "user", content: prompt }],
+        userMessage: { type: "user", content: prompt },
         systemPrompt,
         complete: deps.complete,
         config: deps.config,

@@ -18,7 +18,7 @@ import {
 
 function input(overrides: Partial<LoopInput>): LoopInput {
   return {
-    messages: [{ type: "user", content: "go" }],
+    userMessage: { type: "user", content: "go" },
     systemPrompt,
     complete: scripted([reply("done")]),
     config: testConfig,
@@ -148,7 +148,7 @@ describe("runLoop", () => {
     const first = await runLoop(input({ complete: scripted([reply("one")]) }));
     const second = await runLoop(
       input({
-        messages: [{ type: "user", content: "again" }],
+        userMessage: { type: "user", content: "again" },
         state: first.state,
         complete: scripted([reply("two")]),
       }),

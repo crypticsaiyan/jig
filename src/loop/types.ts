@@ -45,7 +45,7 @@ export type RunContext = {
 
 // loop input format
 export interface LoopInput {
-  messages: AgentMessage[]; // new user query
+  userMessage: AgentMessage; // new user query
   systemPrompt: SystemMessage; // built at runtime, kept out of config and state
   complete: CompleteStreamFunc;
   config: LoopConfig;

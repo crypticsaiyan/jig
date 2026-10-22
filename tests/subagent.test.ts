@@ -32,7 +32,7 @@ describe("subagent", () => {
       reply("found it at a.ts:3"),
     ]);
     const out = await runLoop({
-      messages: [{ type: "user", content: "find it" }],
+      userMessage: { type: "user", content: "find it" },
       systemPrompt,
       complete: scripted([
         callTool("subagent", { prompt: "search for it" }),
@@ -55,7 +55,7 @@ describe("subagent", () => {
   test("child spending counts toward the parent's budget", async () => {
     const ctx = makeCtx();
     const out = await runLoop({
-      messages: [{ type: "user", content: "go" }],
+      userMessage: { type: "user", content: "go" },
       systemPrompt,
       complete: scripted([
         callTool("subagent", { prompt: "expensive" }, 10),
@@ -76,7 +76,7 @@ describe("subagent", () => {
   test("child tool events arrive at depth 1", async () => {
     const events: string[] = [];
     await runLoop({
-      messages: [{ type: "user", content: "go" }],
+      userMessage: { type: "user", content: "go" },
       systemPrompt,
       complete: scripted([
         callTool("subagent", { prompt: "work" }),

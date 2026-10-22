@@ -47,7 +47,7 @@ export async function runTurn(
     cacheWriteTokens: 0,
   };
   const result = await runLoop({
-    messages: [{ type: "user", content: text }],
+    userMessage: { type: "user", content: text },
     state: session.state,
     complete: deps.complete,
     systemPrompt: deps.systemPrompt,
