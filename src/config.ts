@@ -7,6 +7,7 @@ export const CONFIG: LoopConfig = {
   maxTokens: 200000,
   contextWindow: 128000,
   maxPruneAllowanceRatio: 0.1,
+  pruneMinGainRatio: 0.2, // small prunes break the prompt cache for little gain
   compactionRatio: 0.9,
   pruneRatio: 0.5,
   loopModel: "anthropic/claude-haiku-5.5",

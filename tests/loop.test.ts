@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { runLoop } from "../src/loop/loop";
 import type { LoopInput } from "../src/loop/types";
-import type { ToolCall } from "../src/provider/types";
+import type {
+  AgentMessage,
+  CompleteStreamFunc,
+  ToolCall,
+} from "../src/provider/types";
 import { createRegistry } from "../src/tool";
 import type { Tool } from "../src/tool/types";
 import { z } from "zod";
@@ -159,5 +163,43 @@ describe("runLoop", () => {
       "again",
       "two",
     ]);
+  });
+});
+
+describe("prune gate", () => {
+  // records what each model call was sent, then replies from the script
+  function recording(responses: ReturnType<typeof reply>[]) {
+    const sent: AgentMessage[][] = [];
+    const inner = scripted(responses);
+    const fn: CompleteStreamFunc = (messages, ...rest) => {
+      sent.push(messages);
+      return inner(messages, ...rest);
+    };
+    return { fn, sent };
+  }
+
+  // a tiny window, so prune triggers from the second call (prompt 10 >= 20 * 0.5)
+  async function run(pruneMinGainRatio: number) {
+    const long = "x".repeat(400); // ~100 tokens of tool output
+    const model = recording([
+      callTool("echo", { text: long }),
+      callTool("echo", { text: long }),
+      reply("done"),
+    ]);
+    await runLoop(
+      input({
+        complete: model.fn,
+        config: { ...testConfig, contextWindow: 20, pruneMinGainRatio },
+      }),
+    );
+    return JSON.stringify(model.sent.at(-1));
+  }
+
+  test("a big prune is applied", async () => {
+    expect(await run(0.2)).toContain("[Tool output pruned");
+  });
+
+  test("a prune that frees too little is skipped, keeping the cached prompt", async () => {
+    expect(await run(1000)).not.toContain("[Tool output pruned");
   });
 });

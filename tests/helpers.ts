@@ -148,6 +148,7 @@ export const testConfig: LoopConfig = {
   contextWindow: 1_000_000, // huge, so prune and compaction never fire
   pruneRatio: 0.5,
   maxPruneAllowanceRatio: 0.1,
+  pruneMinGainRatio: 0.2,
   compactionRatio: 0.9,
   compactionModel: "test-model",
   loopModel: "test-model",

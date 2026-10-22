@@ -27,6 +27,12 @@ function buildMsgView(
   return [summary, ...messages.slice(summarizedUpTo + 1)];
 }
 
+function estimateTokens(messages: AgentMessage[]): number {
+  let chars = 0;
+  for (const message of messages) chars += message.content?.length ?? 0;
+  return chars / 4;
+}
+
 // tells the model its last turn was cut off, so the next message isn't misread
 const INTERRUPT_NOTE: AgentMessage = {
   type: "user",
@@ -86,11 +92,16 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
 
     // prune past pruneRatio of the context window
     if (lastPromptTokens >= cfg.contextWindow * cfg.pruneRatio) {
-      lastMessageView = prune(
+      const pruned = prune(
         lastMessageView,
         cfg.contextWindow,
         cfg.maxPruneAllowanceRatio,
       );
+      // a prune changes old messages, so the cached prompt is rebuilt from there:
+      // only worth it when it frees a lot; small prunes are skipped
+      const gain = estimateTokens(lastMessageView) - estimateTokens(pruned);
+      if (gain >= lastPromptTokens * cfg.pruneMinGainRatio)
+        lastMessageView = pruned;
     }
 
     // compact past compactionRatio of the context window

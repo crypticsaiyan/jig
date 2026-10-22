@@ -16,6 +16,7 @@ export interface LoopConfig {
   contextWindow: number; // depends on the model (TODO: model mapping)
   pruneRatio: number; // limit after which prune fires
   maxPruneAllowanceRatio: number; // max ctx allowed (latest max not pruned)
+  pruneMinGainRatio: number; // apply a prune only if it frees this share of the prompt
   compactionRatio: number; // limit after which compaction fires
   compactionModel: string;
   loopModel: string;
