@@ -6,7 +6,7 @@ import { saveSession } from "../session/store";
 import type { Registry } from "../tool/types";
 import { TOOLS, UI } from "../config";
 import { runLoop } from "./loop";
-import type { LoopConfig, LoopEvents, LoopOutput } from "./types";
+import type { LoopConfig, LoopEvents, LoopOutput, TokenBudget } from "./types";
 
 // built once at startup, same for every turn
 export type TurnDeps = {
@@ -26,7 +26,7 @@ export type TurnIO = {
 
 export type TurnResult = {
   result: LoopOutput;
-  budgetUsed: number; // includes sub-agents
+  budget: TokenBudget; // what the turn spent, sub-agents included
   saveError?: string;
 };
 
@@ -37,7 +37,15 @@ export async function runTurn(
   deps: TurnDeps,
   io: TurnIO,
 ): Promise<TurnResult> {
-  const budget = { used: 0, max: deps.config.maxTokens }; // fresh each turn
+  // fresh each turn
+  const budget: TokenBudget = {
+    used: 0,
+    max: deps.config.maxTokens,
+    costUsd: 0,
+    promptTokens: 0,
+    cachedTokens: 0,
+    cacheWriteTokens: 0,
+  };
   const result = await runLoop({
     messages: [{ type: "user", content: text }],
     state: session.state,
@@ -60,8 +68,8 @@ export async function runTurn(
 
   try {
     await saveSession(session);
-    return { result, budgetUsed: budget.used };
+    return { result, budget };
   } catch (error) {
-    return { result, budgetUsed: budget.used, saveError: String(error) };
+    return { result, budget, saveError: String(error) };
   }
 }

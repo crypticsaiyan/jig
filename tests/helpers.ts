@@ -87,7 +87,14 @@ export async function* stream(
 
 // --- provider responses, for the loop ---
 
-const STATS = { promptTokens: 10, completionTokens: 5, totalTokens: 15 };
+const STATS = {
+  promptTokens: 10,
+  completionTokens: 5,
+  totalTokens: 15,
+  costUsd: 0.001,
+  cachedTokens: 4,
+  cacheWriteTokens: 0,
+};
 
 export function reply(text: string, totalTokens = 15): ProviderResponse {
   return {
@@ -160,7 +167,14 @@ export function makeCtx(overrides: Partial<RunContext> = {}): RunContext {
       sandbox: false,
       network: false,
     },
-    budget: { used: 0, max: testConfig.maxTokens },
+    budget: {
+      used: 0,
+      max: testConfig.maxTokens,
+      costUsd: 0,
+      promptTokens: 0,
+      cachedTokens: 0,
+      cacheWriteTokens: 0,
+    },
     depth: 0,
     ...overrides,
   };

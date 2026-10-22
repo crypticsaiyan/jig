@@ -97,6 +97,7 @@ async function attempt(task: Task, n: number): Promise<RunResult> {
     passed,
     stopReason: jig.timedOut ? "timeout" : (out.stopReason ?? "crash"),
     tokens: out.budgetUsed ?? 0,
+    costUsd: out.costUsd ?? 0,
     iterations: out.iterations ?? 0,
     toolCalls: Array.isArray(out.tools) ? out.tools.length : 0,
     durationMs,
@@ -139,7 +140,7 @@ async function main(): Promise<void> {
       const r = await attempt(task, n);
       results.push(r);
       console.log(
-        `${task.name} ${n}/${tries}: ${r.passed ? "pass" : "FAIL"}  ${(r.durationMs / 1000).toFixed(0)}s  ${(r.tokens / 1000).toFixed(1)}k tokens  ${r.stopReason}${r.error ? `  (${r.error})` : ""}`,
+        `${task.name} ${n}/${tries}: ${r.passed ? "pass" : "FAIL"}  ${(r.durationMs / 1000).toFixed(0)}s  ${(r.tokens / 1000).toFixed(1)}k tokens  $${r.costUsd.toFixed(4)}  ${r.stopReason}${r.error ? `  (${r.error})` : ""}`,
       );
     }
   }

@@ -96,7 +96,7 @@ Rules:
     return [
       { type: "user", content: `[SUMMARIZED]\n${text}` },
       fromLast - 1,
-      compacted.stats.totalTokens,
+      compacted.stats,
     ];
   }
   return null;

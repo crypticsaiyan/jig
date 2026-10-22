@@ -16,6 +16,9 @@ export type Statistics = {
   promptTokens: number; // input tokens (sent by messages array)
   completionTokens: number; // output tokens: what model generated (assistant text + tool call tokens)
   totalTokens: number;
+  costUsd: number; // as billed by OpenRouter, cache discounts included (0 if not reported)
+  cachedTokens: number; // prompt tokens read from the provider's cache
+  cacheWriteTokens: number; // prompt tokens written to it
 };
 
 export type ProviderResponse = {

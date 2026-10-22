@@ -28,7 +28,29 @@ describe("normalizeStream", () => {
       promptTokens: 10,
       completionTokens: 3,
       totalTokens: 13,
+      costUsd: 0, // not reported in this chunk
+      cachedTokens: 0,
+      cacheWriteTokens: 0,
     });
+  });
+
+  test("keeps the billed cost and cache use", async () => {
+    const usage = {
+      ...usageChunk(2193, 10),
+      usage: {
+        promptTokens: 2193,
+        completionTokens: 10,
+        totalTokens: 2203,
+        cost: 0.00002729,
+        promptTokensDetails: { cachedTokens: 2189, cacheWriteTokens: 0 },
+      },
+    };
+    const res = await normalizeStream(
+      stream([textChunk("hi"), finishChunk("stop"), usage]),
+    );
+    expect(res.stats.costUsd).toBe(0.00002729);
+    expect(res.stats.cachedTokens).toBe(2189);
+    expect(res.stats.cacheWriteTokens).toBe(0);
   });
 
   test("rebuilds one tool call from fragments", async () => {

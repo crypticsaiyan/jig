@@ -70,6 +70,7 @@ describe("subagent", () => {
     expect(out.stopReason).toBe("max_tokens");
     expect(out.tokensUsed).toBe(10); // parent's own calls only
     expect(ctx.budget.used).toBe(10 + testConfig.maxTokens); // shared total
+    expect(ctx.budget.costUsd).toBeCloseTo(0.002); // parent call + child call
   });
 
   test("child tool events arrive at depth 1", async () => {

@@ -2,7 +2,22 @@ import { compact } from "../context/compact";
 import { prune } from "../context/prune";
 import type { AgentMessage } from "../provider";
 import { dispatchTool } from "./dispatch";
-import type { LoopInput, LoopOutput, RunContext, StopReason } from "./types";
+import type { Statistics } from "../provider/types";
+import type {
+  LoopInput,
+  LoopOutput,
+  RunContext,
+  StopReason,
+  TokenBudget,
+} from "./types";
+
+function spend(budget: TokenBudget, stats: Statistics): void {
+  budget.used += stats.totalTokens;
+  budget.costUsd += stats.costUsd;
+  budget.promptTokens += stats.promptTokens;
+  budget.cachedTokens += stats.cachedTokens;
+  budget.cacheWriteTokens += stats.cacheWriteTokens;
+}
 
 function buildMsgView(
   summary: AgentMessage,
@@ -91,14 +106,14 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
           input.complete,
         );
         if (summaryResult) {
-          const [summary, summarizedUpTo, compactionTokensUsed] = summaryResult;
+          const [summary, summarizedUpTo, compactionStats] = summaryResult;
           lastMessageView = buildMsgView(summary, summarizedUpTo, messages);
 
           previousSummary = summary;
           previousSummarizedUpTo = summarizedUpTo;
 
-          tokensUsed += compactionTokensUsed;
-          ctx.budget.used += compactionTokensUsed;
+          tokensUsed += compactionStats.totalTokens;
+          spend(ctx.budget, compactionStats);
         }
       } catch (error) {
         if (ctx.signal.aborted) return finish("interrupted");
@@ -121,7 +136,7 @@ export async function runLoop(input: LoopInput): Promise<LoopOutput> {
     }
 
     tokensUsed += completion.stats.totalTokens;
-    ctx.budget.used += completion.stats.totalTokens;
+    spend(ctx.budget, completion.stats);
     lastPromptTokens = completion.stats.promptTokens;
 
     // console.log(messages);

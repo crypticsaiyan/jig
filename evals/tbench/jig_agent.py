@@ -68,8 +68,14 @@ class JigAgent(BaseInstalledAgent):
             result = json.loads(output.read_text().strip().splitlines()[-1])
         except (json.JSONDecodeError, IndexError):
             return
-        # jig reports one total (budgetUsed: includes sub-agents), not an input/output split
-        context.n_input_tokens = result.get("budgetUsed")
+        # totals over the whole run, sub-agents included
+        prompt = result.get("promptTokens") or 0
+        context.n_input_tokens = prompt
+        context.n_output_tokens = (result.get("budgetUsed") or 0) - prompt
+        context.n_cache_tokens = (result.get("cachedTokens") or 0) + (
+            result.get("cacheWriteTokens") or 0
+        )
+        context.cost_usd = result.get("costUsd")
         context.metadata = {
             "stop_reason": result.get("stopReason"),
             "iterations": result.get("iterations"),

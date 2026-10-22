@@ -43,7 +43,7 @@ export async function runHeadless(opts: HeadlessOptions): Promise<number> {
   };
 
   try {
-    const { result, budgetUsed, saveError } = await runTurn(
+    const { result, budget, saveError } = await runTurn(
       prompt,
       session,
       { ...deps, complete },
@@ -77,7 +77,11 @@ export async function runHeadless(opts: HeadlessOptions): Promise<number> {
           stopReason: result.stopReason,
           iterations: result.iterations,
           tokensUsed: result.tokensUsed,
-          budgetUsed,
+          budgetUsed: budget.used,
+          costUsd: budget.costUsd,
+          promptTokens: budget.promptTokens,
+          cachedTokens: budget.cachedTokens,
+          cacheWriteTokens: budget.cacheWriteTokens,
           durationMs: Math.round(performance.now() - start),
           tools: toolLog,
           sessionId: session.id,

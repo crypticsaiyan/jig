@@ -22,10 +22,14 @@ export interface LoopConfig {
   transcriptCapChars: number;
 }
 
-// tokens spent this turn; one object shared by the parent and its sub-agents
+// tokens and dollars spent this turn; one object shared by the parent and its sub-agents
 export type TokenBudget = {
-  used: number;
+  used: number; // total tokens, checked against max
   max: number;
+  costUsd: number; // as billed, cache discounts included
+  promptTokens: number;
+  cachedTokens: number; // prompt tokens read from the provider's cache
+  cacheWriteTokens: number;
 };
 
 // per-turn runtime state, shared by the loop, its tools and sub-agent loops

@@ -45,6 +45,9 @@ function normalizeStats(usage: ChatUsage | undefined): Statistics {
       promptTokens: usage.promptTokens,
       completionTokens: usage.completionTokens,
       totalTokens: usage.totalTokens,
+      costUsd: usage.cost ?? 0,
+      cachedTokens: usage.promptTokensDetails?.cachedTokens ?? 0,
+      cacheWriteTokens: usage.promptTokensDetails?.cacheWriteTokens ?? 0,
     };
   }
   throw new Error("Error fetching stats");

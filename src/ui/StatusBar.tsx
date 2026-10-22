@@ -9,6 +9,8 @@ type Props = {
   dangerAt: number; // percent where compaction starts
   title: string;
   status: string;
+  costUsd: number; // spent since jig started
+  cacheRate: number; // share of prompt tokens served from the provider's cache
 };
 
 function formatTokens(n: number): string {
@@ -20,6 +22,11 @@ function formatTokens(n: number): string {
   return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
 }
 
+// cents are too coarse for cheap models: $0.0042
+function formatCost(usd: number): string {
+  return usd < 1 ? `$${usd.toFixed(4)}` : `$${usd.toFixed(2)}`;
+}
+
 export function StatusBar({
   model,
   contextWindow,
@@ -29,6 +36,8 @@ export function StatusBar({
   dangerAt,
   title,
   status,
+  costUsd,
+  cacheRate,
 }: Props) {
   const contextColor =
     contextPercent >= dangerAt
@@ -45,6 +54,10 @@ export function StatusBar({
           {formatTokens(contextWindow)}{" "}
         </Text>
         <Text color={contextColor}>{contextPercent}%</Text>
+        <Text dimColor>
+          {" "}
+          · {formatCost(costUsd)} · cache {Math.round(cacheRate * 100)}%
+        </Text>
       </Box>
       <Text dimColor>
         {title || "new session"} . {status}

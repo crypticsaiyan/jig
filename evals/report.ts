@@ -6,6 +6,7 @@ export type RunResult = {
   passed: boolean;
   stopReason: string; // jig's, or "timeout" / "crash" when it didn't finish
   tokens: number; // includes sub-agents (budgetUsed)
+  costUsd: number; // as billed by OpenRouter, cache discounts included
   iterations: number;
   toolCalls: number;
   durationMs: number;
@@ -22,6 +23,7 @@ export type TaskSummary = {
   passAt1: number; // share of tries that passed
   passAll: boolean; // pass^k: every try passed
   avgTokens: number;
+  avgCostUsd: number;
   avgSeconds: number;
   avgIterations: number;
 };
@@ -32,6 +34,7 @@ export type Summary = {
   passAny: number; // pass@k: share of tasks solved at least once
   passAll: number; // pass^k: share of tasks solved on every try
   totalTokens: number;
+  totalCostUsd: number;
 };
 
 const avg = (xs: number[]) =>
@@ -49,6 +52,7 @@ export function summarize(results: RunResult[]): Summary {
       passAt1: passes / runs.length,
       passAll: passes === runs.length,
       avgTokens: avg(runs.map((r) => r.tokens)),
+      avgCostUsd: avg(runs.map((r) => r.costUsd)),
       avgSeconds: avg(runs.map((r) => r.durationMs / 1000)),
       avgIterations: avg(runs.map((r) => r.iterations)),
     };
@@ -59,11 +63,13 @@ export function summarize(results: RunResult[]): Summary {
     passAny: avg(tasks.map((t) => (t.passes > 0 ? 1 : 0))),
     passAll: avg(tasks.map((t) => (t.passAll ? 1 : 0))),
     totalTokens: results.reduce((sum, r) => sum + r.tokens, 0),
+    totalCostUsd: results.reduce((sum, r) => sum + r.costUsd, 0),
   };
 }
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const k = (n: number) => `${(n / 1000).toFixed(1)}k`;
+const usd = (n: number) => `$${n.toFixed(4)}`;
 
 export function formatReport(summary: Summary, tries: number): string {
   const rows = summary.tasks.map((t) =>
@@ -71,6 +77,7 @@ export function formatReport(summary: Summary, tries: number): string {
       t.task.padEnd(22),
       `${t.passes}/${t.tries}`.padStart(5),
       k(t.avgTokens).padStart(8),
+      usd(t.avgCostUsd).padStart(8),
       `${t.avgSeconds.toFixed(0)}s`.padStart(6),
       t.avgIterations.toFixed(1).padStart(6),
     ].join("  "),
@@ -79,6 +86,7 @@ export function formatReport(summary: Summary, tries: number): string {
     "task".padEnd(22),
     "pass",
     "  tokens",
+    "    cost",
     "  time",
     " iters",
   ].join("  ");
@@ -86,6 +94,6 @@ export function formatReport(summary: Summary, tries: number): string {
     header,
     ...rows,
     "-".repeat(header.length),
-    `pass@1 ${pct(summary.passAt1)}   pass@${tries} ${pct(summary.passAny)}   pass^${tries} ${pct(summary.passAll)}   total tokens ${k(summary.totalTokens)}`,
+    `pass@1 ${pct(summary.passAt1)}   pass@${tries} ${pct(summary.passAny)}   pass^${tries} ${pct(summary.passAll)}   total tokens ${k(summary.totalTokens)}   total cost ${usd(summary.totalCostUsd)}`,
   ].join("\n");
 }

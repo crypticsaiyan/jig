@@ -51,6 +51,12 @@ export function App({
   const [liveReasoning, setLiveReasoning] = useState("");
   const [liveTools, setLiveTools] = useState<LiveTool[]>([]); // running tools, index = depth
   const [running, setRunning] = useState(false);
+  // spent since jig started (sub-agents included); not saved with the session
+  const [spent, setSpent] = useState({
+    costUsd: 0,
+    promptTokens: 0,
+    cachedTokens: 0,
+  });
 
   // finished items are printed once at the current width; after a resize, clear and reprint them
   useEffect(() => {
@@ -120,7 +126,7 @@ export function App({
     setRunning(true);
 
     try {
-      const { result, saveError } = await runTurn(
+      const { result, budget, saveError } = await runTurn(
         text,
         sessionRef.current,
         { complete, systemPrompt, config, tools, permissions },
@@ -157,6 +163,11 @@ export function App({
         },
       );
       if (saveError) push("error", "cant save session: " + saveError);
+      setSpent((prev) => ({
+        costUsd: prev.costUsd + budget.costUsd,
+        promptTokens: prev.promptTokens + budget.promptTokens,
+        cachedTokens: prev.cachedTokens + budget.cachedTokens,
+      }));
 
       flushText(); // final answer
 
@@ -272,6 +283,10 @@ export function App({
         dangerAt={Math.round(config.compactionRatio * 100)}
         title={sessionRef.current.title}
         status={status}
+        costUsd={spent.costUsd}
+        cacheRate={
+          spent.promptTokens ? spent.cachedTokens / spent.promptTokens : 0
+        }
       />
     </>
   );
