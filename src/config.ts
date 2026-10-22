@@ -26,6 +26,8 @@ export const TOOLS = {
 export const PROVIDER = {
   streamIdleTimeoutMs: 90_000, // no chunk for this long: the stream is stalled, abort it
   retries: 2, // extra attempts after a stall, network error or 5xx
+  // provider caches the unchanged start of each request: reads cost 0.1x, writes 1.25x
+  promptCache: true,
 };
 
 // project-local storage

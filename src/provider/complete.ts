@@ -40,6 +40,10 @@ export const completeStream: CompleteStreamFunc = async (
           tools: tools.map(toSdkTool),
           stream: true,
           streamOptions: { includeUsage: true },
+          // one moving cache point at the end of the request (automatic caching)
+          ...(PROVIDER.promptCache && {
+            cacheControl: { type: "ephemeral" as const },
+          }),
         },
       },
       { fetchOptions: { signal: controller.signal } },
