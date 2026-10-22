@@ -3,7 +3,10 @@ import type { SystemMessage } from "../provider";
 import type { Skill } from "./types";
 import { PATHS } from "../config";
 
-export const generateSystemPrompt = async (): Promise<SystemMessage> => {
+// headless: run with -p, so no one can answer a question or approve anything
+export const generateSystemPrompt = async (
+  headless = false,
+): Promise<SystemMessage> => {
   const INTRODUCTION = `You are jig, an AI coding assistant that helps the user with software engineering tasks.
 `;
 
@@ -31,6 +34,15 @@ export const generateSystemPrompt = async (): Promise<SystemMessage> => {
 - Never commit or push unless asked.
 - The user may deny a tool call. If denied, do not retry it. Propose an alternative or ask.
 `;
+
+  // last of the rules, so it overrides "ask" above
+  const HEADLESS = headless
+    ? `# HEADLESS RUN:
+- No user is watching and nobody can reply. Never stop to ask a question or wait for confirmation. Where the rules above say ask, pick the most reasonable option, state it in your final answer, and keep going.
+- Work until the task is done. Give up only when it is truly impossible, and then say exactly what is missing.
+- Before your final answer, check the result against every requirement in the task: exact paths, names, formats and outputs. Run the tests or the program to prove it works. If a check fails, fix it and check again.
+`
+    : "";
 
   const cwd = process.cwd();
   const platform = process.platform; // os
@@ -81,6 +93,7 @@ ${TOOLS}
 ${SKILLS}
 ${RULES}
 ${SAFETY}
+${HEADLESS}
 ${ENV}
 `; // env in the end for provider cache stability
 

@@ -28,7 +28,7 @@ const config = {
   contextWindow: await getContextWindow(loopModel, CONFIG.contextWindow),
 };
 
-const systemPrompt = await generateSystemPrompt();
+const systemPrompt = await generateSystemPrompt(process.argv.includes("-p"));
 
 const argv = process.argv;
 
