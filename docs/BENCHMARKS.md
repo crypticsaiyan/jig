@@ -32,12 +32,14 @@ Local eval stayed 33/33 (+20% tokens). One try per task, so confirm with `-k 3` 
 
 Each request marks its unchanged start as cacheable: later reads cost 0.1×, the first write 1.25×. Cost is now OpenRouter's billed amount.
 
-|                                           | Cache off | Cache on   |
-| ----------------------------------------- | --------- | ---------- |
-| Terminal-Bench subset: cost               | $0.116    | **$0.057** |
-| Terminal-Bench subset: cost per 1M tokens | $0.136    | **$0.071** |
-| Terminal-Bench subset: cache hit rate     | 0%        | 87%        |
-| local eval (4 tasks × 3): cost            | $0.064    | **$0.029** |
-| local eval: cost per 1M tokens            | $0.138    | **$0.084** |
+|                                           | Cache off | Cache on   | Change   |
+| ----------------------------------------- | --------- | ---------- | -------- |
+| Terminal-Bench subset: tokens             | 851k      | 801k       | −6%      |
+| Terminal-Bench subset: cost               | $0.116    | **$0.057** | **−51%** |
+| Terminal-Bench subset: cost per 1M tokens | $0.136    | **$0.071** | **−48%** |
+| Terminal-Bench subset: cache hit rate     | 0%        | 87%        |          |
+| local eval (4 tasks × 3): tokens          | 461k      | 345k       | −25%     |
+| local eval: cost                          | $0.064    | **$0.029** | **−54%** |
+| local eval: cost per 1M tokens            | $0.138    | **$0.084** | **−39%** |
 
-About half the cost per token, with no loss in pass rate (Terminal-Bench 7/10 and 9/10, local 12/12 both; the pass difference is run-to-run noise, not caching).
+About half the cost per token, with no loss in pass rate (Terminal-Bench 7/10 and 9/10, local 12/12 both; the pass difference is run-to-run noise, not caching). Caching doesn't change token counts; their differences are run-to-run variation, which is why cost per 1M tokens is the fair comparison.
