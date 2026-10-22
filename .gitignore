@@ -25,3 +25,6 @@ Thumbs.db
 
 # jig
 .jig/sessions/
+
+# eval runs (bun run eval)
+evals/results/

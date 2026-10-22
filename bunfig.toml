@@ -1,0 +1,3 @@
+[test]
+# jig's own tests only; eval tasks have their own (sometimes failing on purpose)
+root = "tests"

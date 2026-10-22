@@ -41,6 +41,8 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
-  }
+    "skipLibCheck": true
+  },
+  // eval task repos are copied out and checked on their own
+  "exclude": ["node_modules", "evals/tasks"]
 }

@@ -1,0 +1,1 @@
+Add a `slugify(text)` function to src/strings.ts that turns a title into a URL slug: lowercase, every run of characters that aren't letters or digits becomes a single hyphen, and no hyphens at the start or end. For example `slugify("Hello, World!")` returns `"hello-world"`.

@@ -1,0 +1,1 @@
+The three handlers in src/handlers/ (signup.ts, invite.ts, profile.ts) repeat the same name and email validation. Move that validation into one exported function `validateUser(input)` in a new file src/validation.ts, and make all three handlers use it. Their behaviour, including the error messages, must not change.

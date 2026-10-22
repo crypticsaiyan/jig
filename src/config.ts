@@ -9,8 +9,8 @@ export const CONFIG: LoopConfig = {
   maxPruneAllowanceRatio: 0.1,
   compactionRatio: 0.9,
   pruneRatio: 0.5,
-  // loopModel: "anthropic/claude-haiku-5.5",
-  loopModel: "openrouter/free",
+  loopModel: "anthropic/claude-haiku-5.5",
+  //loopModel: "openrouter/free",
   compactionModel: "openrouter/free",
   transcriptCapChars: 2000,
 };

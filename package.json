@@ -11,6 +11,7 @@
     "dev": "bun src/index.tsx",
     "watch": "bun --watch src/index.tsx",
     "typecheck": "tsc --noEmit",
+    "eval": "bun evals/run.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

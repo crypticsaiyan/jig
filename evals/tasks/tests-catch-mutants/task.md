@@ -1,0 +1,1 @@
+Write thorough tests for `parseDuration` (src/duration.ts) in src/duration.test.ts using bun:test. They must pass against the current implementation, and should fail if someone breaks any of the behaviour documented in its comment.
