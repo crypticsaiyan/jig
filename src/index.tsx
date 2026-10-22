@@ -12,9 +12,20 @@ import type { PermSession } from "./permission/types";
 import { sandboxAvailable, socatAvailable } from "./sandbox/bwrap";
 import { startProxy } from "./sandbox/proxy";
 
+// value after a flag: "--model x" -> "x"
+const flagValue = (name: string): string | undefined => {
+  const i = process.argv.indexOf(name);
+  return i === -1 ? undefined : process.argv[i + 1];
+};
+
+// benchmarks pick the model and limits per run
+const loopModel = flagValue("--model") ?? CONFIG.loopModel;
 const config = {
   ...CONFIG,
-  contextWindow: await getContextWindow(CONFIG.loopModel, CONFIG.contextWindow),
+  loopModel,
+  maxIterations: Number(flagValue("--max-iterations") ?? CONFIG.maxIterations),
+  maxTokens: Number(flagValue("--max-tokens") ?? CONFIG.maxTokens),
+  contextWindow: await getContextWindow(loopModel, CONFIG.contextWindow),
 };
 
 const systemPrompt = await generateSystemPrompt();
@@ -23,6 +34,8 @@ const argv = process.argv;
 
 const allowAll = argv.includes("--allow-all");
 const allowEdits = argv.includes("--allow-edits"); // evals: edits yes, unsandboxed commands no
+// approves everything, always-ask included: only for throwaway containers (Terminal-Bench)
+const skipPermissions = argv.includes("--dangerously-skip-permissions");
 const json = argv.includes("--json"); // one JSON object on stdout, for scripts
 const pIndex = argv.indexOf("-p"); // headless mode
 const prompt = pIndex === -1 ? undefined : argv[pIndex + 1]; // jig -p "prompt"
@@ -113,6 +126,7 @@ if (pIndex !== -1) {
       deps: { complete, systemPrompt, config, tools, permissions },
       allowAll,
       allowEdits,
+      skipPermissions,
       json,
     }),
   );

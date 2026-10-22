@@ -1,1 +1,0 @@
-Customers report that the cart total is sometimes one cent off. For example, a $1.15 item with a 10% discount shows $1.03, but $1.035 should round up to $1.04. Fix `cartTotal` in src/cart.ts so the total is always exact to the cent, rounding half a cent up. Keep its signature the same.

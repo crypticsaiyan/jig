@@ -28,3 +28,5 @@ Thumbs.db
 
 # eval runs (bun run eval)
 evals/results/
+evals/tbench/jobs/
+__pycache__/

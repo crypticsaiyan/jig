@@ -9,12 +9,18 @@ export type HeadlessOptions = {
   deps: TurnDeps;
   allowAll: boolean; // auto-approve "ask" prompts
   allowEdits: boolean; // auto-approve file edits only; unsandboxed commands stay denied
+  skipPermissions: boolean; // approve everything; the caller's container is the sandbox
   json: boolean; // one JSON object on stdout instead of streamed text
 };
 
 // one turn without the UI: answer on stdout, tool lines on stderr, exit code from stopReason
 export async function runHeadless(opts: HeadlessOptions): Promise<number> {
-  const { prompt, session, deps, allowAll, allowEdits, json } = opts;
+  const { prompt, session, deps, allowAll, allowEdits, skipPermissions, json } =
+    opts;
+  if (skipPermissions)
+    console.error(
+      "jig: --dangerously-skip-permissions: every action is approved",
+    );
   const controller = new AbortController();
   let interrupts = 0;
   process.on("SIGINT", () => {
@@ -44,8 +50,9 @@ export async function runHeadless(opts: HeadlessOptions): Promise<number> {
       {
         // no one to ask: deny by default, never auto-approve always-ask
         asker: async (key, decision) =>
-          decision === "ask" &&
-          (allowAll || (allowEdits && key.kind === "edit"))
+          skipPermissions ||
+          (decision === "ask" &&
+            (allowAll || (allowEdits && key.kind === "edit")))
             ? "allow-once"
             : "deny",
         signal: controller.signal,

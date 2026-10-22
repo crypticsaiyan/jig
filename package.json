@@ -12,6 +12,7 @@
     "watch": "bun --watch src/index.tsx",
     "typecheck": "tsc --noEmit",
     "eval": "bun evals/run.ts",
+    "build": "bun scripts/build.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
